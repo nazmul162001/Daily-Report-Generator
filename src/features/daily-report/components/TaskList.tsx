@@ -1,4 +1,5 @@
 import type { ReportTask } from "@/types/common";
+import { setTaskLabel } from "@/lib/taskLabels";
 import { TaskItem } from "./TaskItem";
 
 interface TaskListProps {
@@ -9,6 +10,15 @@ interface TaskListProps {
 
 export function TaskList({ tasks, error, onChange }: TaskListProps) {
   function updateTask(id: string, next: ReportTask) {
+    const prev = tasks.find((task) => task.id === id);
+    if (
+      prev &&
+      next.title.trim() &&
+      next.title.trim() !== prev.title.trim() &&
+      next.key
+    ) {
+      setTaskLabel("daily-report", next.key, next.title);
+    }
     onChange(tasks.map((task) => (task.id === id ? next : task)));
   }
 
@@ -17,7 +27,8 @@ export function TaskList({ tasks, error, onChange }: TaskListProps) {
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-text">Task list</h3>
         <p className="mt-0.5 text-xs text-muted">
-          Fixed checklist. Toggle checkbox to include, status on the right.
+          Pencil to rename (saved locally). Checkbox to include · status on the
+          right.
         </p>
       </div>
       {error ? <p className="mb-2 text-xs text-danger">{error}</p> : null}

@@ -48,4 +48,8 @@ export const STORAGE_KEYS = {
   draftTodayTask: "drg:draft:today-task",
   draftDailyReport: "drg:draft:daily-report",
   draftDetailedReport: "drg:draft:detailed-report",
+  /** Renamed task titles for Today's Task (survives reload). */
+  taskLabelsToday: "drg:task-labels:today-task",
+  /** Renamed task titles for Daily Report (survives reload). */
+  taskLabelsDaily: "drg:task-labels:daily-report",
 } as const;

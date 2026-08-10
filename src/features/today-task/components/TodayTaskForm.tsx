@@ -1,6 +1,7 @@
 import { FixedTaskRow } from "@/components/ui/FixedTaskRow";
 import { Input } from "@/components/ui/Input";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { setTaskLabel } from "@/lib/taskLabels";
 import type { TodayTaskReport } from "../types";
 
 interface TodayTaskFormProps {
@@ -29,11 +30,24 @@ export function TodayTaskForm({ report, errors, onChange }: TodayTaskFormProps) 
     });
   }
 
+  function updateTaskTitle(id: string, title: string) {
+    const task = report.tasks.find((item) => item.id === id);
+    if (task?.key) {
+      setTaskLabel("today-task", task.key, title);
+    }
+    onChange({
+      ...report,
+      tasks: report.tasks.map((item) =>
+        item.id === id ? { ...item, title } : item,
+      ),
+    });
+  }
+
   return (
     <Card>
       <CardHeader
         title="Report settings"
-        description="Toggle which fixed tasks appear in today's plan."
+        description="Toggle tasks and rename them for your team (saved locally)."
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -58,7 +72,7 @@ export function TodayTaskForm({ report, errors, onChange }: TodayTaskFormProps) 
         <div className="mb-3">
           <h3 className="text-sm font-semibold text-text">Task list</h3>
           <p className="mt-0.5 text-xs text-muted">
-            Fixed checklist. Uncheck items to hide them from the copied report.
+            Use the pencil to rename. Names stay saved after reload.
           </p>
         </div>
         {errors.tasks ? (
@@ -73,6 +87,7 @@ export function TodayTaskForm({ report, errors, onChange }: TodayTaskFormProps) 
                 onIncludedChange={(included) =>
                   updateTaskIncluded(task.id, included)
                 }
+                onTitleChange={(title) => updateTaskTitle(task.id, title)}
               />
             </li>
           ))}

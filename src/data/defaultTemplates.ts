@@ -4,29 +4,58 @@ import type { TodayTaskReport } from "@/features/today-task/types";
 import type { DailyReportData } from "@/features/daily-report/types";
 import type { DetailedReportData } from "@/features/detailed-report/types";
 import { getTodayIsoDate } from "@/lib/date";
+import {
+  getTaskLabels,
+  type TaskLabelScope,
+} from "@/lib/taskLabels";
 
 export const DEFAULT_SECTION = "CMS";
 
-/** Fixed task checklist used by Today Task and Daily Report. */
-export const FIXED_TASK_TITLES = [
-  "Feedback of last day.",
-  "Feedback of today.",
-  "Remaining cases of last day.",
-  "New actual cases today.",
-] as const;
+export type FixedTaskKey =
+  | "feedback-last-day"
+  | "feedback-today"
+  | "remaining-last-day"
+  | "new-actual-today";
 
-export type FixedTaskTitle = (typeof FIXED_TASK_TITLES)[number];
-
-export const DEFAULT_FIXED_TASKS: Array<{
-  title: FixedTaskTitle;
+export interface FixedTaskDef {
+  key: FixedTaskKey;
+  title: string;
   included: boolean;
   status: "completed" | "ongoing";
-}> = [
-  { title: "Feedback of last day.", included: true, status: "completed" },
-  { title: "Feedback of today.", included: false, status: "completed" },
-  { title: "Remaining cases of last day.", included: true, status: "completed" },
-  { title: "New actual cases today.", included: true, status: "ongoing" },
+}
+
+/** Full checklist used by Daily Report (current defaults). */
+export const DAILY_TASK_DEFS: FixedTaskDef[] = [
+  {
+    key: "feedback-last-day",
+    title: "Feedback of last day.",
+    included: true,
+    status: "completed",
+  },
+  {
+    key: "feedback-today",
+    title: "Feedback of today.",
+    included: false,
+    status: "completed",
+  },
+  {
+    key: "remaining-last-day",
+    title: "Remaining cases of last day.",
+    included: true,
+    status: "completed",
+  },
+  {
+    key: "new-actual-today",
+    title: "New actual cases today.",
+    included: true,
+    status: "ongoing",
+  },
 ];
+
+/** Today's Task list — no “Feedback of today”. */
+export const TODAY_TASK_DEFS: FixedTaskDef[] = DAILY_TASK_DEFS.filter(
+  (task) => task.key !== "feedback-today",
+);
 
 export const DEFAULT_WORK_BREAKDOWN: Array<{
   category: string;
@@ -59,19 +88,8 @@ export const DEFAULT_TOMORROW_GOALS = [
   "Ensure all assigned cases are completed on the same day.",
 ] as const;
 
-function createFixedTask(
-  title: string,
-  options: {
-    included: boolean;
-    status?: "completed" | "ongoing";
-  },
-): ReportTask {
-  return {
-    id: createId("task"),
-    title,
-    included: options.included,
-    status: options.status,
-  };
+function taskDefsFor(scope: TaskLabelScope): FixedTaskDef[] {
+  return scope === "today-task" ? TODAY_TASK_DEFS : DAILY_TASK_DEFS;
 }
 
 function toBinaryStatus(
@@ -84,18 +102,62 @@ function toBinaryStatus(
   return fallback;
 }
 
-/** Ensure draft/saved tasks align with the fixed checklist. */
+/** Match legacy drafts / custom titles back to a stable key. */
+export function matchFixedTaskKey(title: string): FixedTaskKey | null {
+  const normalized = title.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.includes("feedback") && normalized.includes("today")) {
+    return "feedback-today";
+  }
+  if (normalized.includes("feedback") && normalized.includes("last")) {
+    return "feedback-last-day";
+  }
+  if (normalized.includes("remaining")) {
+    return "remaining-last-day";
+  }
+  if (normalized.includes("new actual") || normalized.includes("new case")) {
+    return "new-actual-today";
+  }
+  return null;
+}
+
+function resolveKey(task: ReportTask): FixedTaskKey | null {
+  if (
+    task.key === "feedback-last-day" ||
+    task.key === "feedback-today" ||
+    task.key === "remaining-last-day" ||
+    task.key === "new-actual-today"
+  ) {
+    return task.key;
+  }
+  return matchFixedTaskKey(task.title);
+}
+
+/**
+ * Align tasks to the fixed checklist for a tab.
+ * Titles: permanent local labels → draft title → built-in default.
+ */
 export function normalizeFixedTasks(
   existing: ReportTask[] | undefined,
   withStatus: boolean,
+  scope: TaskLabelScope = "daily-report",
 ): ReportTask[] {
-  return DEFAULT_FIXED_TASKS.map((def) => {
-    const match = existing?.find(
-      (task) => matchFixedTaskTitle(task.title) === def.title,
-    );
+  const defs = taskDefsFor(scope);
+  const labels = getTaskLabels(scope);
+
+  return defs.map((def) => {
+    const match = existing?.find((task) => resolveKey(task) === def.key);
+    const title =
+      labels[def.key]?.trim() ||
+      match?.title?.trim() ||
+      def.title;
+
     return {
       id: match?.id || createId("task"),
-      title: def.title,
+      key: def.key,
+      title,
       included: match?.included ?? def.included,
       status: withStatus
         ? toBinaryStatus(match?.status, def.status)
@@ -104,34 +166,12 @@ export function normalizeFixedTasks(
   });
 }
 
-function matchFixedTaskTitle(title: string): FixedTaskTitle | null {
-  const normalized = title.trim().toLowerCase();
-  if (!normalized) {
-    return null;
-  }
-  if (normalized.includes("feedback") && normalized.includes("today")) {
-    return "Feedback of today.";
-  }
-  if (normalized.includes("feedback") && normalized.includes("last")) {
-    return "Feedback of last day.";
-  }
-  if (normalized.includes("remaining")) {
-    return "Remaining cases of last day.";
-  }
-  if (normalized.includes("new actual") || normalized.includes("new case")) {
-    return "New actual cases today.";
-  }
-  return null;
-}
-
 export function createDefaultTodayTask(): TodayTaskReport {
   return {
     id: createId("today"),
     date: getTodayIsoDate(),
     section: DEFAULT_SECTION,
-    tasks: DEFAULT_FIXED_TASKS.map((task) =>
-      createFixedTask(task.title, { included: task.included }),
-    ),
+    tasks: normalizeFixedTasks(undefined, false, "today-task"),
   };
 }
 
@@ -140,12 +180,7 @@ export function createDefaultDailyReport(): DailyReportData {
     id: createId("daily"),
     date: getTodayIsoDate(),
     section: DEFAULT_SECTION,
-    tasks: DEFAULT_FIXED_TASKS.map((task) =>
-      createFixedTask(task.title, {
-        included: task.included,
-        status: task.status,
-      }),
-    ),
+    tasks: normalizeFixedTasks(undefined, true, "daily-report"),
   };
 }
 

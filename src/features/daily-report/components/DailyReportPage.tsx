@@ -31,7 +31,7 @@ function DailyReportPageInner() {
     if (draft) {
       setReport({
         ...draft,
-        tasks: normalizeFixedTasks(draft.tasks, true),
+        tasks: normalizeFixedTasks(draft.tasks, true, "daily-report"),
       });
       showToast("Draft restored.", "info");
     } else {

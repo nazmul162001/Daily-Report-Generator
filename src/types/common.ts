@@ -4,6 +4,8 @@ export type ReportStatus = "completed" | "ongoing" | "not-started" | "custom";
 
 export interface ReportTask {
   id: string;
+  /** Stable identity for defaults + renamed labels (survives reloads). */
+  key?: string;
   title: string;
   status?: ReportStatus;
   customStatus?: string;

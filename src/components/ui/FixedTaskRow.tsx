@@ -1,12 +1,18 @@
+import { EditableTaskTitle } from "@/components/ui/EditableTaskTitle";
 import type { ReportTask } from "@/types/common";
 
 interface FixedTaskRowProps {
   task: ReportTask;
   onIncludedChange: (included: boolean) => void;
+  onTitleChange: (title: string) => void;
 }
 
-/** Shared fixed-task row: checkbox left, title, optional trailing content. */
-export function FixedTaskRow({ task, onIncludedChange }: FixedTaskRowProps) {
+/** Shared fixed-task row: checkbox, editable title, optional trailing content. */
+export function FixedTaskRow({
+  task,
+  onIncludedChange,
+  onTitleChange,
+}: FixedTaskRowProps) {
   const included = task.included !== false;
 
   return (
@@ -43,7 +49,7 @@ export function FixedTaskRow({ task, onIncludedChange }: FixedTaskRowProps) {
         </span>
       </label>
 
-      <p className="min-w-0 flex-1 text-sm font-medium text-text">{task.title}</p>
+      <EditableTaskTitle title={task.title} onSave={onTitleChange} />
 
       {!included ? (
         <span className="text-xs text-muted">Hidden from copy</span>

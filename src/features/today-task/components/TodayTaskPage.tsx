@@ -31,7 +31,7 @@ function TodayTaskPageInner() {
     if (draft) {
       setReport({
         ...draft,
-        tasks: normalizeFixedTasks(draft.tasks, false),
+        tasks: normalizeFixedTasks(draft.tasks, false, "today-task"),
       });
       showToast("Draft restored.", "info");
     } else {

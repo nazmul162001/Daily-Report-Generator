@@ -1,3 +1,4 @@
+import { EditableTaskTitle } from "@/components/ui/EditableTaskTitle";
 import type { ReportTask } from "@/types/common";
 import { STATUS_LABELS } from "../types";
 
@@ -47,9 +48,10 @@ export function TaskItem({ task, onChange }: TaskItemProps) {
           </span>
         </label>
 
-        <p className="min-w-0 flex-1 text-sm font-medium text-text">
-          {task.title}
-        </p>
+        <EditableTaskTitle
+          title={task.title}
+          onSave={(title) => onChange({ ...task, title })}
+        />
 
         <div
           className="inline-flex shrink-0 rounded-lg border border-border bg-surface p-0.5"
@@ -59,7 +61,7 @@ export function TaskItem({ task, onChange }: TaskItemProps) {
           <button
             type="button"
             onClick={() => onChange({ ...task, status: "completed" })}
-            className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+            className={`cursor-pointer rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
               status === "completed"
                 ? "bg-success text-white shadow-sm"
                 : "text-muted hover:text-text"
