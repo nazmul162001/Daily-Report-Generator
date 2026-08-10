@@ -185,9 +185,9 @@ export function SortableRowLayout({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-start gap-1.5 sm:gap-2", className)}>
+    <div className={cn("flex items-center gap-1.5 sm:gap-2", className)}>
       <DragHandle
-        className="mt-1 shrink-0"
+        className="shrink-0"
         {...drag.attributes}
         {...drag.listeners}
       />

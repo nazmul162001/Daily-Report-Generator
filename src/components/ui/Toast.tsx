@@ -57,17 +57,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             )}
             role="status"
           >
-            <div className="flex items-start gap-2">
+            <div className="flex items-center gap-2">
               <span
                 className={cn(
-                  "mt-0.5 inline-block h-2 w-2 shrink-0 rounded-full",
+                  "inline-block h-2 w-2 shrink-0 self-center rounded-full",
                   toast.type === "success" && "bg-success",
                   toast.type === "error" && "bg-danger",
                   toast.type === "info" && "bg-primary",
                 )}
                 aria-hidden="true"
               />
-              <span>{toast.message}</span>
+              <span className="leading-snug">{toast.message}</span>
             </div>
           </div>
         ))}

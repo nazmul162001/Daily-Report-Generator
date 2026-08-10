@@ -62,8 +62,6 @@ export function FixedTaskRow({
         >
           Remove
         </button>
-      ) : !included ? (
-        <span className="text-xs text-muted">Hidden from copy</span>
       ) : null}
     </div>
   );
