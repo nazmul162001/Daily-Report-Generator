@@ -1,5 +1,9 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import {
+  SortableList,
+  SortableRowLayout,
+} from "@/components/ui/SortableList";
 import { createId } from "@/lib/utils";
 import type { BulletItem } from "@/types/common";
 
@@ -43,20 +47,25 @@ export function BulletListEditor({
             <p className="mt-0.5 text-xs text-muted">
               Empty — this section is hidden when copied.
             </p>
-          ) : null}
+          ) : (
+            <p className="mt-0.5 text-xs text-muted">
+              Drag the grip to reorder items.
+            </p>
+          )}
         </div>
         <Button size="sm" variant="secondary" onClick={addItem}>
           {addLabel}
         </Button>
       </div>
       {error ? <p className="mb-2 text-xs text-danger">{error}</p> : null}
-      {items.length > 0 ? (
-        <ul className="flex flex-col gap-2" aria-label={title}>
-          {items.map((item, index) => (
-            <li
-              key={item.id}
-              className="grid grid-cols-[1fr_auto] items-center gap-2"
-            >
+      <SortableList
+        items={items}
+        onReorder={onChange}
+        ariaLabel={title}
+        className="gap-2"
+        renderItem={(item, index, drag) => (
+          <SortableRowLayout drag={drag} className="items-center">
+            <div className="grid grid-cols-[1fr_auto] items-center gap-2">
               <Input
                 id={`${idPrefix}-${item.id}`}
                 value={item.text}
@@ -88,10 +97,10 @@ export function BulletListEditor({
                   <path strokeLinecap="round" d="M10 11v6M14 11v6" />
                 </svg>
               </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+            </div>
+          </SortableRowLayout>
+        )}
+      />
     </section>
   );
 }

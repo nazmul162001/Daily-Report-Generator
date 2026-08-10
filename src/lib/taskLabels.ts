@@ -4,7 +4,6 @@ import {
   DAILY_TASK_DEFS,
   TODAY_TASK_DEFS,
   type FixedTaskDef,
-  type FixedTaskKey,
 } from "@/data/taskDefs";
 
 export type TaskLabelScope = "today-task" | "daily-report";
@@ -63,7 +62,7 @@ function defaultCatalog(scope: TaskLabelScope): TaskCatalogItem[] {
 
 /**
  * Ordered task catalog for a tab.
- * Always includes built-in defaults first, then any user-added custom tasks.
+ * Preserves user order (including drag-and-drop); ensures defaults still exist.
  */
 export function getTaskCatalog(scope: TaskLabelScope): TaskCatalogItem[] {
   const stored = getStorageItem<TaskCatalogItem[] | null>(
@@ -72,32 +71,65 @@ export function getTaskCatalog(scope: TaskLabelScope): TaskCatalogItem[] {
   );
   const labels = getLegacyLabels(scope);
   const defs = defaultDefs(scope);
-  const defKeys = new Set(defs.map((d) => d.key));
 
   if (!stored || stored.length === 0) {
     return defaultCatalog(scope);
   }
 
-  const storedByKey = new Map(
-    stored
-      .filter((item) => item.key?.trim() && item.title?.trim())
-      .map((item) => [item.key, item.title.trim()] as const),
-  );
+  const result: TaskCatalogItem[] = [];
+  const seen = new Set<string>();
 
-  const defaults: TaskCatalogItem[] = defs.map((def) => ({
-    key: def.key,
-    title:
-      storedByKey.get(def.key) || labels[def.key]?.trim() || def.title,
-  }));
+  for (const item of stored) {
+    const key = item.key?.trim();
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    const def = defs.find((d) => d.key === key);
+    result.push({
+      key,
+      title:
+        item.title?.trim() ||
+        labels[key]?.trim() ||
+        def?.title ||
+        "New task",
+    });
+  }
 
-  const customs: TaskCatalogItem[] = stored
-    .filter((item) => item.key && !defKeys.has(item.key as FixedTaskKey))
-    .map((item) => ({
-      key: item.key,
-      title: item.title.trim() || "New task",
-    }));
+  // Append any missing built-in defaults at the end
+  for (const def of defs) {
+    if (!seen.has(def.key)) {
+      result.push({
+        key: def.key,
+        title: labels[def.key]?.trim() || def.title,
+      });
+    }
+  }
 
-  return [...defaults, ...customs];
+  return result;
+}
+
+/** Persist full task order after drag-and-drop. */
+export function saveTaskOrderFromTasks(
+  scope: TaskLabelScope,
+  tasks: Array<{ key?: string; title: string }>,
+): void {
+  const catalog: TaskCatalogItem[] = [];
+  const seen = new Set<string>();
+  for (const task of tasks) {
+    const key = task.key?.trim();
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    catalog.push({
+      key,
+      title: task.title.trim() || "New task",
+    });
+  }
+  if (catalog.length > 0) {
+    saveTaskCatalog(scope, catalog);
+  }
 }
 
 export function saveTaskCatalog(

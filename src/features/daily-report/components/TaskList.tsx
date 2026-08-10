@@ -1,9 +1,14 @@
 import { Button } from "@/components/ui/Button";
+import {
+  SortableList,
+  SortableRowLayout,
+} from "@/components/ui/SortableList";
 import { createId } from "@/lib/utils";
 import {
   addTaskToCatalog,
   isCustomTaskKey,
   removeTaskFromCatalog,
+  saveTaskOrderFromTasks,
   setTaskLabel,
 } from "@/lib/taskLabels";
 import type { ReportTask } from "@/types/common";
@@ -52,13 +57,18 @@ export function TaskList({ tasks, error, onChange }: TaskListProps) {
     onChange(tasks.filter((item) => item.id !== id));
   }
 
+  function reorderTasks(next: ReportTask[]) {
+    saveTaskOrderFromTasks("daily-report", next);
+    onChange(next);
+  }
+
   return (
     <div>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-text">Task list</h3>
           <p className="mt-0.5 text-xs text-muted">
-            Defaults stay. Add or rename — saved after reload.
+            Drag the grip to reorder. Changes save after reload.
           </p>
         </div>
         <Button size="sm" variant="secondary" onClick={addTask}>
@@ -66,20 +76,25 @@ export function TaskList({ tasks, error, onChange }: TaskListProps) {
         </Button>
       </div>
       {error ? <p className="mb-2 text-xs text-danger">{error}</p> : null}
-      <ul className="flex flex-col gap-3" aria-label="Daily report tasks">
-        {tasks.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            onChange={(next) => updateTask(task.id, next)}
-            onRemove={
-              isCustomTaskKey(task.key)
-                ? () => removeTask(task.id)
-                : undefined
-            }
-          />
-        ))}
-      </ul>
+      <SortableList
+        items={tasks}
+        onReorder={reorderTasks}
+        ariaLabel="Daily report tasks"
+        className="gap-3"
+        renderItem={(task, _index, drag) => (
+          <SortableRowLayout drag={drag}>
+            <TaskItem
+              task={task}
+              onChange={(next) => updateTask(task.id, next)}
+              onRemove={
+                isCustomTaskKey(task.key)
+                  ? () => removeTask(task.id)
+                  : undefined
+              }
+            />
+          </SortableRowLayout>
+        )}
+      />
     </div>
   );
 }

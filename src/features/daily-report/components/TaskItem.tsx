@@ -13,7 +13,7 @@ export function TaskItem({ task, onChange, onRemove }: TaskItemProps) {
   const included = task.included !== false;
 
   return (
-    <li
+    <div
       className={`rounded-xl border px-3 py-3 transition-colors ${
         included
           ? "border-border bg-background/60"
@@ -104,6 +104,6 @@ export function TaskItem({ task, onChange, onRemove }: TaskItemProps) {
       ) : (
         <p className="mt-2 pl-9 text-xs text-muted">Hidden from copy</p>
       )}
-    </li>
+    </div>
   );
 }

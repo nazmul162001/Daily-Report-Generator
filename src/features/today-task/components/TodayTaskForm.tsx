@@ -2,11 +2,16 @@ import { Button } from "@/components/ui/Button";
 import { FixedTaskRow } from "@/components/ui/FixedTaskRow";
 import { Input } from "@/components/ui/Input";
 import { Card, CardHeader } from "@/components/ui/Card";
+import {
+  SortableList,
+  SortableRowLayout,
+} from "@/components/ui/SortableList";
 import { createId } from "@/lib/utils";
 import {
   addTaskToCatalog,
   isCustomTaskKey,
   removeTaskFromCatalog,
+  saveTaskOrderFromTasks,
   setTaskLabel,
 } from "@/lib/taskLabels";
 import type { ReportTask } from "@/types/common";
@@ -76,11 +81,16 @@ export function TodayTaskForm({ report, errors, onChange }: TodayTaskFormProps) 
     });
   }
 
+  function reorderTasks(tasks: ReportTask[]) {
+    saveTaskOrderFromTasks("today-task", tasks);
+    onChange({ ...report, tasks });
+  }
+
   return (
     <Card>
       <CardHeader
         title="Report settings"
-        description="Add, rename, or toggle tasks — all changes save locally."
+        description="Drag to reorder. Add or rename tasks — saved locally."
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -106,7 +116,7 @@ export function TodayTaskForm({ report, errors, onChange }: TodayTaskFormProps) 
           <div>
             <h3 className="text-sm font-semibold text-text">Task list</h3>
             <p className="mt-0.5 text-xs text-muted">
-              Defaults stay. Add or rename — saved after reload.
+              Drag the grip to reorder. Changes save after reload.
             </p>
           </div>
           <Button size="sm" variant="secondary" onClick={addTask}>
@@ -117,9 +127,13 @@ export function TodayTaskForm({ report, errors, onChange }: TodayTaskFormProps) 
           <p className="mb-2 text-xs text-danger">{errors.tasks}</p>
         ) : null}
 
-        <ul className="flex flex-col gap-3" aria-label="Today task list">
-          {report.tasks.map((task) => (
-            <li key={task.id}>
+        <SortableList
+          items={report.tasks}
+          onReorder={reorderTasks}
+          ariaLabel="Today task list"
+          className="gap-3"
+          renderItem={(task, _index, drag) => (
+            <SortableRowLayout drag={drag}>
               <FixedTaskRow
                 task={task}
                 onIncludedChange={(included) =>
@@ -132,9 +146,9 @@ export function TodayTaskForm({ report, errors, onChange }: TodayTaskFormProps) 
                     : undefined
                 }
               />
-            </li>
-          ))}
-        </ul>
+            </SortableRowLayout>
+          )}
+        />
       </div>
     </Card>
   );
