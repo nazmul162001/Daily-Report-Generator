@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
-import { createDefaultDetailedReport } from "@/data/defaultTemplates";
 import {
-  getDraft,
-  reportRepository,
-  setPreferences,
-} from "@/lib/repository";
+  createDefaultDetailedReport,
+  normalizeDetailedReport,
+} from "@/data/defaultTemplates";
+import { getDraft, reportRepository, setPreferences } from "@/lib/repository";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { createId } from "@/lib/utils";
 import { useDraftAutoSave } from "@/hooks/useDraftAutoSave";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { copyToClipboard } from "@/lib/clipboard";
 import type { DetailedReportData } from "../types";
+import { parseMinutes } from "../duration";
 import {
   formatDetailedReport,
   formatDetailedReportHtml,
@@ -35,7 +35,7 @@ function DetailedReportPageInner() {
   useEffect(() => {
     const draft = getDraft<DetailedReportData>(STORAGE_KEYS.draftDetailedReport);
     if (draft) {
-      setReport(draft);
+      setReport(normalizeDetailedReport(draft));
       showToast("Draft restored.", "info");
     } else {
       setReport(createDefaultDetailedReport());
@@ -58,20 +58,20 @@ function DetailedReportPageInner() {
   const validate = useCallback((): boolean => {
     const nextErrors: typeof errors = {};
     if (report.recipients.every((r) => !r.name.trim())) {
-      nextErrors.recipients = "Add at least one recipient.";
+      nextErrors.recipients = "Recipients are missing.";
     }
     if (report.workBreakdown.every((item) => !item.category.trim())) {
       nextErrors.workBreakdown = "Add at least one work breakdown row.";
     }
-    const invalidHours = report.workBreakdown.some(
+    const invalidMinutes = report.workBreakdown.some(
       (item) =>
         item.category.trim() &&
         !item.isNA &&
-        !item.hours.trim(),
+        parseMinutes(item.minutes) === null,
     );
-    if (invalidHours) {
+    if (invalidMinutes) {
       nextErrors.workBreakdown =
-        "Enter hours or mark as N/A for each active category.";
+        "Enter minutes or mark as N/A for each active category.";
     }
     if (report.goalReview.every((item) => !item.text.trim())) {
       nextErrors.goalReview = "Add at least one goal review item.";
@@ -113,7 +113,7 @@ function DetailedReportPageInner() {
       payload: report,
     });
     showToast("Report saved.");
-  }, [generated, report.date, showToast, validate]);
+  }, [generated, report, showToast, validate]);
 
   useKeyboardShortcuts({
     onCopy: handleCopy,

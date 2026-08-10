@@ -21,7 +21,8 @@ export interface Recipient {
 export interface WorkBreakdownItem {
   id: string;
   category: string;
-  hours: string;
+  /** Minutes only; copy output converts to minutes + hours. */
+  minutes: string;
   isNA: boolean;
 }
 

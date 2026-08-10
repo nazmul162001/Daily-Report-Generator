@@ -28,11 +28,7 @@ export function DetailedReportForm({
           title="Detailed CMS Report"
           description="Compose work breakdown and goals for stakeholders."
         />
-        <RecipientsEditor
-          recipients={report.recipients}
-          error={errors.recipients}
-          onChange={(recipients) => onChange({ ...report, recipients })}
-        />
+        <RecipientsEditor error={errors.recipients} />
       </Card>
 
       <Card>

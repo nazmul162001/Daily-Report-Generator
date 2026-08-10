@@ -38,8 +38,8 @@ export function ReportPreview({
   }
 
   return (
-    <Card className="sticky top-4 flex h-fit flex-col">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <Card className="sticky top-[4.75rem] z-20 flex h-fit max-h-[calc(100vh-5.5rem)] flex-col overflow-hidden bg-surface sm:top-20 sm:max-h-[calc(100vh-6rem)]">
+      <div className="mb-3 shrink-0 flex flex-wrap items-center justify-between gap-2 bg-surface">
         <div>
           <h2 className="text-base font-semibold text-text sm:text-lg">
             {title}
@@ -60,7 +60,7 @@ export function ReportPreview({
         </div>
       </div>
 
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+      <div className="mb-4 shrink-0 flex flex-col gap-2 sm:flex-row">
         <Button
           onClick={handleCopy}
           variant={copied ? "success" : "primary"}
@@ -83,7 +83,7 @@ export function ReportPreview({
       </div>
 
       <pre
-        className="max-h-[min(60vh,520px)] overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-white p-4 font-mono text-[13px] leading-relaxed text-text sm:text-sm"
+        className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-white p-4 font-mono text-[13px] leading-relaxed text-text sm:text-sm"
         aria-label="Generated report preview"
       >
         {content || "Your report preview will appear here."}

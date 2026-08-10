@@ -59,7 +59,7 @@ export function TaskItem({ task, onChange }: TaskItemProps) {
           <button
             type="button"
             onClick={() => onChange({ ...task, status: "completed" })}
-            className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
               status === "completed"
                 ? "bg-success text-white shadow-sm"
                 : "text-muted hover:text-text"
@@ -71,7 +71,7 @@ export function TaskItem({ task, onChange }: TaskItemProps) {
           <button
             type="button"
             onClick={() => onChange({ ...task, status: "ongoing" })}
-            className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            className={`cursor-pointer rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
               status === "ongoing"
                 ? "bg-warning text-white shadow-sm"
                 : "text-muted hover:text-text"

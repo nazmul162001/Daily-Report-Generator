@@ -1,15 +1,8 @@
+import {
+  formatDurationLabel,
+  parseMinutes,
+} from "./duration";
 import type { DetailedReportData } from "./types";
-
-function formatHours(hours: string, isNA: boolean): string {
-  if (isNA || !hours.trim()) {
-    return "N/A";
-  }
-  const value = hours.trim();
-  if (value.toLowerCase() === "n/a") {
-    return "N/A";
-  }
-  return `${value} hours`;
-}
 
 function escapeHtml(value: string): string {
   return value
@@ -19,17 +12,20 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
-/**
- * Slack mrkdwn-friendly plain text.
- * Uses single-asterisk bold (*text*) and bullet points — not GitHub **markdown**.
- */
-export function formatDetailedReport(report: DetailedReportData): string {
-  const recipients = report.recipients
+function formatRecipientsLine(report: DetailedReportData): string {
+  return report.recipients
     .map((r) => r.name.trim())
     .filter(Boolean)
     .map((name) => `@${name} san`)
     .join(", ");
+}
 
+/**
+ * Plain-text preview / text/plain clipboard.
+ * Clean display without markdown asterisks; HTML clipboard applies real bold in Slack.
+ */
+export function formatDetailedReport(report: DetailedReportData): string {
+  const recipients = formatRecipientsLine(report);
   const lines: string[] = [];
 
   if (recipients) {
@@ -37,7 +33,7 @@ export function formatDetailedReport(report: DetailedReportData): string {
     lines.push("");
   }
 
-  lines.push("*Work Breakdown*");
+  lines.push("Work Breakdown");
   lines.push("");
 
   for (const item of report.workBreakdown) {
@@ -45,11 +41,13 @@ export function formatDetailedReport(report: DetailedReportData): string {
     if (!category) {
       continue;
     }
-    lines.push(`• *${category}:* ${formatHours(item.hours, item.isNA)}`);
+    lines.push(
+      `• ${category}: ${formatDurationLabel(item.minutes, item.isNA)}`,
+    );
   }
 
   lines.push("");
-  lines.push("*Goal Review*");
+  lines.push("Goal Review");
   lines.push("");
 
   for (const goal of report.goalReview) {
@@ -60,7 +58,7 @@ export function formatDetailedReport(report: DetailedReportData): string {
   }
 
   lines.push("");
-  lines.push("*Goals for Tomorrow*");
+  lines.push("Goals for Tomorrow");
   lines.push("");
 
   for (const goal of report.tomorrowGoals) {
@@ -73,34 +71,36 @@ export function formatDetailedReport(report: DetailedReportData): string {
   return lines.join("\n");
 }
 
-/** HTML variant so paste into Slack rich text editor keeps bold + bullets. */
+/**
+ * HTML for Slack rich paste:
+ * - plain section headings
+ * - bold category names only
+ * - real bullet lists
+ */
 export function formatDetailedReportHtml(report: DetailedReportData): string {
-  const recipients = report.recipients
-    .map((r) => r.name.trim())
-    .filter(Boolean)
-    .map((name) => `@${escapeHtml(name)} san`)
-    .join(", ");
-
+  const recipients = formatRecipientsLine(report);
   const parts: string[] = [];
 
   if (recipients) {
-    parts.push(`<p>${recipients}</p>`);
+    parts.push(`<div>${escapeHtml(recipients)}</div>`);
+    parts.push("<div><br></div>");
   }
 
-  parts.push("<p><strong>Work Breakdown</strong></p>");
+  parts.push("<div>Work Breakdown</div>");
   parts.push("<ul>");
   for (const item of report.workBreakdown) {
     const category = item.category.trim();
     if (!category) {
       continue;
     }
+    const duration = formatDurationLabel(item.minutes, item.isNA);
     parts.push(
-      `<li><strong>${escapeHtml(category)}:</strong> ${escapeHtml(formatHours(item.hours, item.isNA))}</li>`,
+      `<li><strong>${escapeHtml(category)}:</strong> ${escapeHtml(duration)}</li>`,
     );
   }
   parts.push("</ul>");
 
-  parts.push("<p><strong>Goal Review</strong></p>");
+  parts.push("<div>Goal Review</div>");
   parts.push("<ul>");
   for (const goal of report.goalReview) {
     const text = goal.text.trim();
@@ -110,7 +110,7 @@ export function formatDetailedReportHtml(report: DetailedReportData): string {
   }
   parts.push("</ul>");
 
-  parts.push("<p><strong>Goals for Tomorrow</strong></p>");
+  parts.push("<div>Goals for Tomorrow</div>");
   parts.push("<ul>");
   for (const goal of report.tomorrowGoals) {
     const text = goal.text.trim();
@@ -120,5 +120,13 @@ export function formatDetailedReportHtml(report: DetailedReportData): string {
   }
   parts.push("</ul>");
 
-  return parts.join("");
+  return [
+    "<html><body>",
+    "<!--StartFragment-->",
+    parts.join(""),
+    "<!--EndFragment-->",
+    "</body></html>",
+  ].join("");
 }
+
+export { parseMinutes, formatDurationLabel };

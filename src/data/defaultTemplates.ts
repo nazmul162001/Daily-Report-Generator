@@ -30,19 +30,23 @@ export const DEFAULT_FIXED_TASKS: Array<{
 
 export const DEFAULT_WORK_BREAKDOWN: Array<{
   category: string;
-  hours: string;
+  minutes: string;
   isNA: boolean;
 }> = [
-  { category: "Revision", hours: "4.9", isNA: false },
-  { category: "Feedback Response", hours: "1.2", isNA: false },
-  { category: "Meeting", hours: "1", isNA: false },
-  { category: "Question Response (Support & Learning)", hours: "1", isNA: false },
-  { category: "Review", hours: "", isNA: true },
-  { category: "Investigation", hours: "", isNA: true },
+  { category: "Revision", minutes: "294", isNA: false },
+  { category: "Feedback Response", minutes: "72", isNA: false },
+  { category: "Meeting", minutes: "60", isNA: false },
+  {
+    category: "Question Response (Support & Learning)",
+    minutes: "60",
+    isNA: false,
+  },
+  { category: "Review", minutes: "", isNA: true },
+  { category: "Investigation", minutes: "", isNA: true },
 ];
 
 export const DEFAULT_RECIPIENTS = [
-  "Yuya Shimizu（シミズ）",
+  "Yuya Shimizu（শিমিজু）",
   "Shahriar Ahmed Shawon",
 ] as const;
 
@@ -157,7 +161,7 @@ export function createDefaultDetailedReport(): DetailedReportData {
       (item): WorkBreakdownItem => ({
         id: createId("wb"),
         category: item.category,
-        hours: item.hours,
+        minutes: item.minutes,
         isNA: item.isNA,
       }),
     ),
@@ -167,5 +171,50 @@ export function createDefaultDetailedReport(): DetailedReportData {
     tomorrowGoals: DEFAULT_TOMORROW_GOALS.map(
       (text): BulletItem => ({ id: createId("tomorrow"), text }),
     ),
+  };
+}
+
+/** Migrate old drafts: force fixed recipients, hours → minutes. */
+export function normalizeDetailedReport(
+  draft: Partial<DetailedReportData> & {
+    workBreakdown?: Array<
+      Partial<WorkBreakdownItem> & { hours?: string; minutes?: string }
+    >;
+  },
+): DetailedReportData {
+  const base = createDefaultDetailedReport();
+
+  const workBreakdown =
+    draft.workBreakdown && draft.workBreakdown.length > 0
+      ? draft.workBreakdown.map((item) => {
+          let minutes = item.minutes?.trim() ?? "";
+          if (!minutes && item.hours?.trim()) {
+            const hours = Number(item.hours.trim());
+            if (Number.isFinite(hours) && hours >= 0) {
+              minutes = String(Math.round(hours * 60));
+            }
+          }
+          return {
+            id: item.id || createId("wb"),
+            category: item.category ?? "",
+            minutes,
+            isNA: Boolean(item.isNA),
+          };
+        })
+      : base.workBreakdown;
+
+  return {
+    id: draft.id || base.id,
+    date: draft.date || base.date,
+    recipients: base.recipients,
+    workBreakdown,
+    goalReview:
+      draft.goalReview && draft.goalReview.length > 0
+        ? draft.goalReview
+        : base.goalReview,
+    tomorrowGoals:
+      draft.tomorrowGoals && draft.tomorrowGoals.length > 0
+        ? draft.tomorrowGoals
+        : base.tomorrowGoals,
   };
 }
