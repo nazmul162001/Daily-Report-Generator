@@ -52,4 +52,8 @@ export const STORAGE_KEYS = {
   taskLabelsToday: "drg:task-labels:today-task",
   /** Renamed task titles for Daily Report (survives reload). */
   taskLabelsDaily: "drg:task-labels:daily-report",
+  /** Full ordered task catalog (defaults + custom) for Today's Task. */
+  taskCatalogToday: "drg:task-catalog:today-task",
+  /** Full ordered task catalog (defaults + custom) for Daily Report. */
+  taskCatalogDaily: "drg:task-catalog:daily-report",
 } as const;

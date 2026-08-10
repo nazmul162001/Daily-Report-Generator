@@ -5,13 +5,15 @@ interface FixedTaskRowProps {
   task: ReportTask;
   onIncludedChange: (included: boolean) => void;
   onTitleChange: (title: string) => void;
+  onRemove?: () => void;
 }
 
-/** Shared fixed-task row: checkbox, editable title, optional trailing content. */
+/** Shared task row: checkbox, editable title, optional remove for custom tasks. */
 export function FixedTaskRow({
   task,
   onIncludedChange,
   onTitleChange,
+  onRemove,
 }: FixedTaskRowProps) {
   const included = task.included !== false;
 
@@ -51,7 +53,16 @@ export function FixedTaskRow({
 
       <EditableTaskTitle title={task.title} onSave={onTitleChange} />
 
-      {!included ? (
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="cursor-pointer rounded-lg px-2 py-1.5 text-xs font-semibold text-danger hover:bg-background"
+          aria-label={`Remove “${task.title}”`}
+        >
+          Remove
+        </button>
+      ) : !included ? (
         <span className="text-xs text-muted">Hidden from copy</span>
       ) : null}
     </div>

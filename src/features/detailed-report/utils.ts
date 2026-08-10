@@ -1,8 +1,10 @@
+import { DEFAULT_RECIPIENTS } from "@/data/defaultTemplates";
 import {
   formatDurationLabel,
   parseMinutes,
 } from "./duration";
 import type { DetailedReportData } from "./types";
+import type { BulletItem } from "@/types/common";
 
 function escapeHtml(value: string): string {
   return value
@@ -12,26 +14,24 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
-function formatRecipientsLine(report: DetailedReportData): string {
-  return report.recipients
-    .map((r) => r.name.trim())
-    .filter(Boolean)
-    .map((name) => `@${name} san`)
-    .join(", ");
+/** Fixed Slack mention line — workspace display names. */
+export function formatRecipientsLine(): string {
+  return DEFAULT_RECIPIENTS.map((name) => `@${name} san`).join(", ");
+}
+
+function filledGoals(items: BulletItem[]): string[] {
+  return items.map((item) => item.text.trim()).filter(Boolean);
 }
 
 /**
  * Plain-text preview / text/plain clipboard.
- * Clean display without markdown asterisks; HTML clipboard applies real bold in Slack.
+ * Goal sections omitted when empty.
  */
 export function formatDetailedReport(report: DetailedReportData): string {
-  const recipients = formatRecipientsLine(report);
   const lines: string[] = [];
 
-  if (recipients) {
-    lines.push(recipients);
-    lines.push("");
-  }
+  lines.push(formatRecipientsLine());
+  lines.push("");
 
   lines.push("Work Breakdown");
   lines.push("");
@@ -46,24 +46,22 @@ export function formatDetailedReport(report: DetailedReportData): string {
     );
   }
 
-  lines.push("");
-  lines.push("Goal Review");
-  lines.push("");
-
-  for (const goal of report.goalReview) {
-    const text = goal.text.trim();
-    if (text) {
+  const goalReview = filledGoals(report.goalReview);
+  if (goalReview.length > 0) {
+    lines.push("");
+    lines.push("Goal Review");
+    lines.push("");
+    for (const text of goalReview) {
       lines.push(`• ${text}`);
     }
   }
 
-  lines.push("");
-  lines.push("Goals for Tomorrow");
-  lines.push("");
-
-  for (const goal of report.tomorrowGoals) {
-    const text = goal.text.trim();
-    if (text) {
+  const tomorrowGoals = filledGoals(report.tomorrowGoals);
+  if (tomorrowGoals.length > 0) {
+    lines.push("");
+    lines.push("Goals for Tomorrow");
+    lines.push("");
+    for (const text of tomorrowGoals) {
       lines.push(`• ${text}`);
     }
   }
@@ -72,19 +70,19 @@ export function formatDetailedReport(report: DetailedReportData): string {
 }
 
 /**
- * HTML for Slack rich paste:
- * - plain section headings
- * - bold category names only
- * - real bullet lists
+ * HTML for Slack rich paste.
+ * Goal sections omitted when empty.
  */
 export function formatDetailedReportHtml(report: DetailedReportData): string {
-  const recipients = formatRecipientsLine(report);
   const parts: string[] = [];
 
-  if (recipients) {
-    parts.push(`<div>${escapeHtml(recipients)}</div>`);
-    parts.push("<div><br></div>");
-  }
+  const mentionSpans = DEFAULT_RECIPIENTS.map((name, index) => {
+    const mention = `@${escapeHtml(name)} san`;
+    const sep = index > 0 ? ", " : "";
+    return `${sep}<span>${mention}</span>`;
+  }).join("");
+  parts.push(`<div>${mentionSpans}</div>`);
+  parts.push("<div><br></div>");
 
   parts.push("<div>Work Breakdown</div>");
   parts.push("<ul>");
@@ -100,25 +98,25 @@ export function formatDetailedReportHtml(report: DetailedReportData): string {
   }
   parts.push("</ul>");
 
-  parts.push("<div>Goal Review</div>");
-  parts.push("<ul>");
-  for (const goal of report.goalReview) {
-    const text = goal.text.trim();
-    if (text) {
+  const goalReview = filledGoals(report.goalReview);
+  if (goalReview.length > 0) {
+    parts.push("<div>Goal Review</div>");
+    parts.push("<ul>");
+    for (const text of goalReview) {
       parts.push(`<li>${escapeHtml(text)}</li>`);
     }
+    parts.push("</ul>");
   }
-  parts.push("</ul>");
 
-  parts.push("<div>Goals for Tomorrow</div>");
-  parts.push("<ul>");
-  for (const goal of report.tomorrowGoals) {
-    const text = goal.text.trim();
-    if (text) {
+  const tomorrowGoals = filledGoals(report.tomorrowGoals);
+  if (tomorrowGoals.length > 0) {
+    parts.push("<div>Goals for Tomorrow</div>");
+    parts.push("<ul>");
+    for (const text of tomorrowGoals) {
       parts.push(`<li>${escapeHtml(text)}</li>`);
     }
+    parts.push("</ul>");
   }
-  parts.push("</ul>");
 
   return [
     "<html><body>",

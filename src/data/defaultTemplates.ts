@@ -4,74 +4,35 @@ import type { TodayTaskReport } from "@/features/today-task/types";
 import type { DailyReportData } from "@/features/daily-report/types";
 import type { DetailedReportData } from "@/features/detailed-report/types";
 import { getTodayIsoDate } from "@/lib/date";
+import { getTaskCatalog, type TaskLabelScope } from "@/lib/taskLabels";
 import {
-  getTaskLabels,
-  type TaskLabelScope,
-} from "@/lib/taskLabels";
+  DAILY_TASK_DEFS,
+  TODAY_TASK_DEFS,
+  type FixedTaskKey,
+  type FixedTaskDef,
+} from "@/data/taskDefs";
 
 export const DEFAULT_SECTION = "CMS";
 
-export type FixedTaskKey =
-  | "feedback-last-day"
-  | "feedback-today"
-  | "remaining-last-day"
-  | "new-actual-today";
-
-export interface FixedTaskDef {
-  key: FixedTaskKey;
-  title: string;
-  included: boolean;
-  status: "completed" | "ongoing";
-}
-
-/** Full checklist used by Daily Report (current defaults). */
-export const DAILY_TASK_DEFS: FixedTaskDef[] = [
-  {
-    key: "feedback-last-day",
-    title: "Feedback of last day.",
-    included: true,
-    status: "completed",
-  },
-  {
-    key: "feedback-today",
-    title: "Feedback of today.",
-    included: false,
-    status: "completed",
-  },
-  {
-    key: "remaining-last-day",
-    title: "Remaining cases of last day.",
-    included: true,
-    status: "completed",
-  },
-  {
-    key: "new-actual-today",
-    title: "New actual cases today.",
-    included: true,
-    status: "ongoing",
-  },
-];
-
-/** Today's Task list — no “Feedback of today”. */
-export const TODAY_TASK_DEFS: FixedTaskDef[] = DAILY_TASK_DEFS.filter(
-  (task) => task.key !== "feedback-today",
-);
+export type { FixedTaskKey, FixedTaskDef };
+export { DAILY_TASK_DEFS, TODAY_TASK_DEFS };
 
 export const DEFAULT_WORK_BREAKDOWN: Array<{
   category: string;
   minutes: string;
   isNA: boolean;
 }> = [
+  // Defaults stored in minutes; hours shown: 4.9, 1.2, 1, 1, —, 1.7
   { category: "Revision", minutes: "294", isNA: false },
   { category: "Feedback Response", minutes: "72", isNA: false },
   { category: "Meeting", minutes: "60", isNA: false },
   {
     category: "Question Response (Support & Learning)",
     minutes: "60",
-    isNA: false,
+    isNA: true,
   },
   { category: "Review", minutes: "", isNA: true },
-  { category: "Investigation", minutes: "", isNA: true },
+  { category: "Investigation", minutes: "102", isNA: false },
 ];
 
 export const DEFAULT_RECIPIENTS = [
@@ -123,44 +84,57 @@ export function matchFixedTaskKey(title: string): FixedTaskKey | null {
   return null;
 }
 
-function resolveKey(task: ReportTask): FixedTaskKey | null {
-  if (
-    task.key === "feedback-last-day" ||
-    task.key === "feedback-today" ||
-    task.key === "remaining-last-day" ||
-    task.key === "new-actual-today"
-  ) {
-    return task.key;
+function resolveKey(task: ReportTask): string | null {
+  if (task.key?.trim()) {
+    return task.key.trim();
   }
   return matchFixedTaskKey(task.title);
 }
 
 /**
- * Align tasks to the fixed checklist for a tab.
- * Titles: permanent local labels → draft title → built-in default.
+ * Build the task list from the local catalog (defaults + user-added).
+ * Titles/membership from permanent local catalog; include/status from draft.
  */
 export function normalizeFixedTasks(
   existing: ReportTask[] | undefined,
   withStatus: boolean,
   scope: TaskLabelScope = "daily-report",
 ): ReportTask[] {
+  const catalog = getTaskCatalog(scope);
   const defs = taskDefsFor(scope);
-  const labels = getTaskLabels(scope);
+  const defByKey = new Map(defs.map((def) => [def.key, def]));
 
-  return defs.map((def) => {
-    const match = existing?.find((task) => resolveKey(task) === def.key);
-    const title =
-      labels[def.key]?.trim() ||
-      match?.title?.trim() ||
-      def.title;
+  const catalogKeys = new Set(catalog.map((item) => item.key));
+  const draftOnlyCustoms =
+    existing?.filter((task) => {
+      const key = resolveKey(task);
+      return (
+        key &&
+        key.startsWith("custom-") &&
+        !catalogKeys.has(key) &&
+        task.title.trim()
+      );
+    }) ?? [];
+
+  const entries = [
+    ...catalog,
+    ...draftOnlyCustoms.map((task) => ({
+      key: resolveKey(task)!,
+      title: task.title.trim(),
+    })),
+  ];
+
+  return entries.map((item) => {
+    const def = defByKey.get(item.key as FixedTaskKey);
+    const match = existing?.find((task) => resolveKey(task) === item.key);
 
     return {
       id: match?.id || createId("task"),
-      key: def.key,
-      title,
-      included: match?.included ?? def.included,
+      key: item.key,
+      title: item.title.trim() || def?.title || "New task",
+      included: match?.included ?? def?.included ?? true,
       status: withStatus
-        ? toBinaryStatus(match?.status, def.status)
+        ? toBinaryStatus(match?.status, def?.status ?? "completed")
         : undefined,
     };
   });
@@ -243,13 +217,12 @@ export function normalizeDetailedReport(
     date: draft.date || base.date,
     recipients: base.recipients,
     workBreakdown,
-    goalReview:
-      draft.goalReview && draft.goalReview.length > 0
-        ? draft.goalReview
-        : base.goalReview,
-    tomorrowGoals:
-      draft.tomorrowGoals && draft.tomorrowGoals.length > 0
-        ? draft.tomorrowGoals
-        : base.tomorrowGoals,
+    // Allow empty arrays (user deleted all — section omitted from copy)
+    goalReview: Array.isArray(draft.goalReview)
+      ? draft.goalReview
+      : base.goalReview,
+    tomorrowGoals: Array.isArray(draft.tomorrowGoals)
+      ? draft.tomorrowGoals
+      : base.tomorrowGoals,
   };
 }

@@ -24,7 +24,7 @@ function formatCmsBlock(
     if (!title) {
       continue;
     }
-    lines.push(`-> ${title} [${formatStatusLabel(task.status)}]`);
+    lines.push(`→ ${title} [${formatStatusLabel(task.status)}]`);
   }
 
   return lines.join("\n");

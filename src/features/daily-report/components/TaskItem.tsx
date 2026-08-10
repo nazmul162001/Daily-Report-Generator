@@ -5,9 +5,10 @@ import { STATUS_LABELS } from "../types";
 interface TaskItemProps {
   task: ReportTask;
   onChange: (task: ReportTask) => void;
+  onRemove?: () => void;
 }
 
-export function TaskItem({ task, onChange }: TaskItemProps) {
+export function TaskItem({ task, onChange, onRemove }: TaskItemProps) {
   const status = task.status === "ongoing" ? "ongoing" : "completed";
   const included = task.included !== false;
 
@@ -52,6 +53,17 @@ export function TaskItem({ task, onChange }: TaskItemProps) {
           title={task.title}
           onSave={(title) => onChange({ ...task, title })}
         />
+
+        {onRemove ? (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="cursor-pointer rounded-lg px-2 py-1.5 text-xs font-semibold text-danger hover:bg-background"
+            aria-label={`Remove “${task.title}”`}
+          >
+            Remove
+          </button>
+        ) : null}
 
         <div
           className="inline-flex shrink-0 rounded-lg border border-border bg-surface p-0.5"

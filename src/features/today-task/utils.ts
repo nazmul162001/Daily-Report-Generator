@@ -14,7 +14,7 @@ function formatCmsBlock(
     }
     const title = task.title.trim();
     if (title) {
-      lines.push(`-> ${title}`);
+      lines.push(`→ ${title}`);
     }
   }
 

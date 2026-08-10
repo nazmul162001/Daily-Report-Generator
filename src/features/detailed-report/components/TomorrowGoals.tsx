@@ -13,6 +13,7 @@ export function TomorrowGoals({ items, error, onChange }: TomorrowGoalsProps) {
       title="Goals for Tomorrow"
       idPrefix="tomorrow-goals"
       addLabel="Add goal"
+      placeholder="Goal for tomorrow"
       items={items}
       error={error}
       onChange={onChange}

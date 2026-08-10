@@ -8,6 +8,7 @@ interface BulletListEditorProps {
   items: BulletItem[];
   error?: string;
   addLabel?: string;
+  placeholder?: string;
   onChange: (items: BulletItem[]) => void;
   idPrefix: string;
 }
@@ -17,6 +18,7 @@ export function BulletListEditor({
   items,
   error,
   addLabel = "Add item",
+  placeholder = "Enter goal",
   onChange,
   idPrefix,
 }: BulletListEditorProps) {
@@ -29,88 +31,67 @@ export function BulletListEditor({
   }
 
   function removeItem(id: string) {
-    if (items.length <= 1) {
-      return;
-    }
     onChange(items.filter((item) => item.id !== id));
-  }
-
-  function moveItem(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= items.length) {
-      return;
-    }
-    const next = [...items];
-    const current = next[index];
-    const neighbor = next[target];
-    if (!current || !neighbor) {
-      return;
-    }
-    next[index] = neighbor;
-    next[target] = current;
-    onChange(next);
   }
 
   return (
     <section>
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-text">{title}</h3>
+        <div>
+          <h3 className="text-sm font-semibold text-text">{title}</h3>
+          {items.length === 0 ? (
+            <p className="mt-0.5 text-xs text-muted">
+              Empty — this section is hidden when copied.
+            </p>
+          ) : null}
+        </div>
         <Button size="sm" variant="secondary" onClick={addItem}>
           {addLabel}
         </Button>
       </div>
       {error ? <p className="mb-2 text-xs text-danger">{error}</p> : null}
-      <ul className="flex flex-col gap-3" aria-label={title}>
-        {items.map((item, index) => (
-          <li
-            key={item.id}
-            className="rounded-xl border border-border bg-background/60 p-3"
-          >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-muted">
-                Item {index + 1}
-              </span>
-              <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => moveItem(index, -1)}
-                  disabled={index === 0}
-                  aria-label={`Move item ${index + 1} up`}
+      {items.length > 0 ? (
+        <ul className="flex flex-col gap-2" aria-label={title}>
+          {items.map((item, index) => (
+            <li
+              key={item.id}
+              className="grid grid-cols-[1fr_auto] items-center gap-2"
+            >
+              <Input
+                id={`${idPrefix}-${item.id}`}
+                value={item.text}
+                onChange={(event) => updateItem(item.id, event.target.value)}
+                placeholder={placeholder}
+                aria-label={`${title} ${index + 1}`}
+              />
+              <button
+                type="button"
+                onClick={() => removeItem(item.id)}
+                className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl text-danger transition-colors hover:bg-danger/10"
+                aria-label={`Remove ${title} item ${index + 1}`}
+                title="Remove"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-5 w-5"
+                  aria-hidden
                 >
-                  ↑
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => moveItem(index, 1)}
-                  disabled={index === items.length - 1}
-                  aria-label={`Move item ${index + 1} down`}
-                >
-                  ↓
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-danger hover:text-danger"
-                  onClick={() => removeItem(item.id)}
-                  disabled={items.length <= 1}
-                  aria-label={`Remove item ${index + 1}`}
-                >
-                  Delete
-                </Button>
-              </div>
-            </div>
-            <Input
-              id={`${idPrefix}-${item.id}`}
-              label={`${title} text`}
-              value={item.text}
-              onChange={(event) => updateItem(item.id, event.target.value)}
-              placeholder="Enter item text"
-            />
-          </li>
-        ))}
-      </ul>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 6h18M9 6V4h6v2m-8 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"
+                  />
+                  <path strokeLinecap="round" d="M10 11v6M14 11v6" />
+                </svg>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </section>
   );
 }

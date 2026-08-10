@@ -73,12 +73,7 @@ function DetailedReportPageInner() {
       nextErrors.workBreakdown =
         "Enter minutes or mark as N/A for each active category.";
     }
-    if (report.goalReview.every((item) => !item.text.trim())) {
-      nextErrors.goalReview = "Add at least one goal review item.";
-    }
-    if (report.tomorrowGoals.every((item) => !item.text.trim())) {
-      nextErrors.tomorrowGoals = "Add at least one goal for tomorrow.";
-    }
+    // Goal Review / Goals for Tomorrow are optional — empty = omitted from copy
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }, [report]);

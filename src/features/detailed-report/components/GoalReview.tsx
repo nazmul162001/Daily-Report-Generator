@@ -13,6 +13,7 @@ export function GoalReview({ items, error, onChange }: GoalReviewProps) {
       title="Goal Review"
       idPrefix="goal-review"
       addLabel="Add goal"
+      placeholder="Goal review"
       items={items}
       error={error}
       onChange={onChange}
