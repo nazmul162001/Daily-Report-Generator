@@ -35,7 +35,7 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
   - `Ctrl/Cmd+Enter` — copy
   - `Ctrl/Cmd+S` — save
 - **Mobile-first** responsive layout
-- **Dark / light mode** — sun/moon toggle on the header (right); preference saved in LocalStorage; respects system preference on first visit
+- **Dark / light mode** — sun/moon toggle on the header (right); **defaults to light**; preference saved in LocalStorage
 - **Star on GitHub** link in the header
 
 ### Editable task lists (Today's Task & Daily Report)

@@ -23,16 +23,9 @@ const {
     <script is:inline>
       (function () {
         try {
+          // Default is always light; only honor an explicit user choice.
           var stored = localStorage.getItem("theme");
-          var prefersDark =
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches;
-          var theme =
-            stored === "light" || stored === "dark"
-              ? stored
-              : prefersDark
-                ? "dark"
-                : "light";
+          var theme = stored === "dark" ? "dark" : "light";
           document.documentElement.setAttribute("data-theme", theme);
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) {
