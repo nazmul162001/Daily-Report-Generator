@@ -7,6 +7,11 @@ import { fileURLToPath } from 'node:url';
 // https://astro.build/config
 export default defineConfig({
   integrations: [react()],
+  // Prefetch pages on hover/viewport for snappy ClientRouter navigations
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover',
+  },
   vite: {
     plugins: [tailwindcss()],
     resolve: {

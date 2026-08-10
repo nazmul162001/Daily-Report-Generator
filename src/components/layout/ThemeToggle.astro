@@ -1,7 +1,7 @@
 ---
 /**
- * Telegram-style circular theme reveal.
- * Always blooms from the sun/moon control (header top-right).
+ * Telegram-style theme bloom — always from the header sun/moon (top-right).
+ * Neutralizes View Transition default transforms (those pull the origin to center).
  */
 ---
 
@@ -50,13 +50,17 @@
 
 <script is:inline>
   (function () {
-    var btn = document.getElementById("theme-toggle");
-    if (!btn || btn.dataset.bound === "1") return;
-    btn.dataset.bound = "1";
+    if (window.__themeToggleInit) return;
+    window.__themeToggleInit = true;
 
+    var STYLE_ID = "theme-circle-vt-style";
     var busy = false;
-    /** Reveal length — keep in sync with wait below. */
-    var DURATION = 480;
+    /* Longer + near-linear = steady bloom, no end crawl/snap */
+    var DURATION_MS = 640;
+
+    function getBtn() {
+      return document.getElementById("theme-toggle");
+    }
 
     function currentTheme() {
       return document.documentElement.getAttribute("data-theme") === "dark"
@@ -69,6 +73,8 @@
     }
 
     function applyLabel(theme) {
+      var btn = getBtn();
+      if (!btn) return;
       var next = theme === "dark" ? "light" : "dark";
       btn.setAttribute("aria-label", "Switch to " + next + " mode");
       btn.setAttribute("title", "Switch to " + next + " mode");
@@ -92,67 +98,122 @@
     }
 
     /**
-     * Origin for the bloom — ALWAYS header toggle / top-right.
-     * Uses % of the snapshot (viewport) so the browser never remaps
-     * pixel coords to the layer center.
+     * Always top-right. Prefer the toggle button rect, never center.
+     * Returned as % of the VT layer so transform quirks can't remap px to center.
      */
-    function getOriginPercents() {
+    function getTopRightOriginPct(clickEvent) {
       var vw = window.innerWidth || 1;
       var vh = window.innerHeight || 1;
-      var el = document.getElementById("theme-toggle");
-      // Default: top-right gutter (matches header control area)
-      var xPct = 96.5;
-      var yPct = 4.5;
+      var xPct = 97;
+      var yPct = 3.5;
+      var btn = getBtn();
 
-      if (el) {
-        var r = el.getBoundingClientRect();
+      if (btn) {
+        var r = btn.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) {
           xPct = ((r.left + r.width / 2) / vw) * 100;
           yPct = ((r.top + r.height / 2) / vh) * 100;
         }
+      } else if (
+        clickEvent &&
+        typeof clickEvent.clientX === "number" &&
+        clickEvent.clientX > vw * 0.6
+      ) {
+        xPct = (clickEvent.clientX / vw) * 100;
+        yPct = (clickEvent.clientY / vh) * 100;
       }
 
-      // Force top-right quadrant — never allow center origins
-      if (!(xPct > 70)) xPct = 96.5;
-      if (!(yPct < 20)) yPct = 4.5;
-      if (!Number.isFinite(xPct) || !Number.isFinite(yPct)) {
-        xPct = 96.5;
-        yPct = 4.5;
-      }
+      // Hard clamp into the top-right corner — never allow center
+      xPct = Math.min(99.2, Math.max(88, xPct));
+      yPct = Math.min(12, Math.max(1.5, yPct));
 
       return {
-        x: Math.min(99, Math.max(70, +xPct.toFixed(3))),
-        y: Math.min(18, Math.max(1, +yPct.toFixed(3))),
+        x: +xPct.toFixed(3),
+        y: +yPct.toFixed(3),
       };
     }
 
-    /**
-     * Radius as % of box diagonal reference so a single value
-     * always fully covers any viewport (no end snap).
-     */
-    function coverRadiusPercent(xPct, yPct) {
-      // Corners of a 0–100 box, distance in % units (euclidean on % space)
-      var corners = [
-        [0, 0],
-        [100, 0],
-        [0, 100],
-        [100, 100],
-      ];
-      var max = 0;
-      for (var i = 0; i < corners.length; i++) {
-        var dx = corners[i][0] - xPct;
-        var dy = corners[i][1] - yPct;
-        // Convert % of width/height to roughly normalized distance;
-        // use max side so circle(r%) with CSS % radius (relative to diagonal) clears fully.
-        var d = Math.hypot(dx, dy);
-        if (d > max) max = d;
-      }
-      // CSS circle % radius is relative to diagonal ≈ 141% of shorter side.
-      // 150 is safely past full cover for any origin in the box.
-      return Math.ceil(Math.max(max * 1.35, 150));
+    function removeStyle() {
+      var el = document.getElementById(STYLE_ID);
+      if (el) el.remove();
     }
 
-    async function toggleWithReveal() {
+    function injectStyle(xPct, yPct) {
+      removeStyle();
+      var style = document.createElement("style");
+      style.id = STYLE_ID;
+      /*
+        Critical rules:
+        1) Kill named layers so only root snapshots
+        2) Kill default group TRANSFORMS (these create center morph)
+        3) Expand clip with % origin — top-right of the layer
+        4) Near-linear timing for continuous smooth motion
+      */
+      style.textContent = [
+        "html.theme-revealing body *{view-transition-name:none!important}",
+
+        "::view-transition{pointer-events:none}",
+
+        /* Pin root group to the full viewport — no geometry morph */
+        "::view-transition-group(root){",
+        "animation:none!important;",
+        "transform:none!important;",
+        "top:0!important;left:0!important;right:0!important;bottom:0!important;",
+        "width:100%!important;height:100%!important;",
+        "}",
+
+        "::view-transition-image-pair(root){",
+        "isolation:isolate;",
+        "}",
+
+        "::view-transition-old(root),",
+        "::view-transition-new(root){",
+        "mix-blend-mode:normal;",
+        "transform:none!important;",
+        "top:0!important;left:0!important;",
+        "width:100%!important;height:100%!important;",
+        "object-fit:cover;",
+        "}",
+
+        /* Old theme stays fully visible underneath */
+        "::view-transition-old(root){",
+        "z-index:1;",
+        "animation:none!important;",
+        "}",
+
+        /* New theme blooms as a circle from top-right */
+        "::view-transition-new(root){",
+        "z-index:2147483646;",
+        "animation:theme-circle-reveal " +
+          DURATION_MS +
+          "ms cubic-bezier(0.33,0,0.2,1) both!important;",
+        "}",
+
+        "@keyframes theme-circle-reveal{",
+        "0%{clip-path:circle(0% at " +
+          xPct +
+          "% " +
+          yPct +
+          "%)}",
+        "100%{clip-path:circle(160% at " +
+          xPct +
+          "% " +
+          yPct +
+          "%)}",
+        "}",
+      ].join("");
+      document.head.appendChild(style);
+    }
+
+    function doubleRaf() {
+      return new Promise(function (resolve) {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(resolve);
+        });
+      });
+    }
+
+    async function toggleWithReveal(clickEvent) {
       if (busy) return;
       var next = currentTheme() === "dark" ? "light" : "dark";
 
@@ -162,50 +223,66 @@
       }
 
       busy = true;
-      var origin = getOriginPercents();
-      var rPct = coverRadiusPercent(origin.x, origin.y);
-      var from = "circle(0% at " + origin.x + "% " + origin.y + "%)";
-      var to = "circle(" + rPct + "% at " + origin.x + "% " + origin.y + "%)";
+      var root = document.documentElement;
+      var origin = getTopRightOriginPct(clickEvent);
+
+      injectStyle(origin.x, origin.y);
+      root.classList.add("theme-revealing");
+      await doubleRaf();
 
       try {
         var transition = document.startViewTransition(function () {
           setTheme(next);
         });
 
+        // Backup WAAPI with the same % origin (in case CSS anim is dropped)
         try {
           await transition.ready;
-        } catch (_) {
-          busy = false;
-          return;
-        }
-
-        // Even speed all the way — no hard ease-out crawl + snap
-        var anim = document.documentElement.animate(
-          [{ clipPath: from }, { clipPath: to }],
-          {
-            duration: DURATION,
-            // Smooth throughout; mild ease without stalling at the end
-            easing: "cubic-bezier(0.45, 0.05, 0.55, 0.95)",
-            fill: "both",
-            pseudoElement: "::view-transition-new(root)",
-          },
-        );
+          root.animate(
+            [
+              { clipPath: "circle(0% at " + origin.x + "% " + origin.y + "%)" },
+              {
+                clipPath:
+                  "circle(160% at " + origin.x + "% " + origin.y + "%)",
+              },
+            ],
+            {
+              duration: DURATION_MS,
+              easing: "cubic-bezier(0.33, 0, 0.2, 1)",
+              fill: "both",
+              pseudoElement: "::view-transition-new(root)",
+            },
+          );
+        } catch (_) {}
 
         try {
-          await Promise.all([
-            anim.finished.catch(function () {}),
-            transition.finished.catch(function () {}),
-          ]);
+          await transition.finished;
         } catch (_) {}
+      } catch (_) {
+        setTheme(next);
       } finally {
-        busy = false;
+        // Small delay so the last frame paints before tearing down styles
+        window.setTimeout(function () {
+          root.classList.remove("theme-revealing");
+          removeStyle();
+          busy = false;
+        }, 40);
       }
     }
 
-    applyLabel(currentTheme());
-    btn.addEventListener("click", function (event) {
-      event.preventDefault();
-      toggleWithReveal();
-    });
+    function bindClick() {
+      var btn = getBtn();
+      if (!btn || btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+      applyLabel(currentTheme());
+      btn.addEventListener("click", function (event) {
+        event.preventDefault();
+        toggleWithReveal(event);
+      });
+    }
+
+    document.addEventListener("astro:page-load", bindClick);
+    document.addEventListener("astro:after-swap", bindClick);
+    bindClick();
   })();
 </script>

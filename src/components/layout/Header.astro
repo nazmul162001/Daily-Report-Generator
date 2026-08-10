@@ -20,12 +20,24 @@ function isActive(href: string): boolean {
 }
 ---
 
+<!--
+  Persist chrome across soft navigations so the header / theme toggle
+  don't remount on every route. Active link styles refresh via script.
+-->
 <header
+  id="site-header"
   class="sticky top-0 z-40 border-b border-border backdrop-blur-xl"
   style="background-color: var(--c-header-bg);"
+  transition:persist="site-header"
+  transition:name="site-header"
 >
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-    <a href="/" class="flex min-w-0 items-center gap-2.5" aria-label="Daily Report Generator home">
+    <a
+      href="/"
+      data-nav-link
+      class="flex min-w-0 items-center gap-2.5"
+      aria-label="Daily Report Generator home"
+    >
       <span
         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-sm ring-1 ring-white/15"
       >
@@ -42,6 +54,8 @@ function isActive(href: string): boolean {
         {links.map((link) => (
           <a
             href={link.href}
+            data-nav-link
+            data-nav-href={link.href}
             class:list={[
               "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
               isActive(link.href)
@@ -88,7 +102,7 @@ function isActive(href: string): boolean {
         </svg>
       </a>
 
-      <details class="relative md:hidden">
+      <details class="relative md:hidden" data-mobile-nav>
         <summary
           class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-background text-text shadow-sm sm:h-10 sm:w-10"
           aria-label="Open menu"
@@ -101,6 +115,8 @@ function isActive(href: string): boolean {
           {links.map((link) => (
             <a
               href={link.href}
+              data-nav-link
+              data-nav-href={link.href}
               class:list={[
                 "block rounded-xl px-3 py-2.5 text-sm font-medium",
                 isActive(link.href) ? "bg-primary/10 text-primary" : "text-text hover:bg-background",
@@ -117,3 +133,54 @@ function isActive(href: string): boolean {
     </div>
   </div>
 </header>
+
+<script is:inline>
+  (function () {
+    if (window.__navChromeInit) return;
+    window.__navChromeInit = true;
+
+    function pathMatches(href, path) {
+      if (href === "/") return path === "/";
+      return path === href || path.startsWith(href + "/");
+    }
+
+    function updateActiveNav() {
+      var path = window.location.pathname.replace(/\/$/, "") || "/";
+      var links = document.querySelectorAll("[data-nav-href]");
+      links.forEach(function (node) {
+        var href = node.getAttribute("data-nav-href") || "";
+        var active = pathMatches(href, path);
+        var isMobile = node.classList.contains("block");
+
+        if (active) {
+          node.setAttribute("aria-current", "page");
+          if (isMobile) {
+            node.className =
+              "block rounded-xl px-3 py-2.5 text-sm font-medium bg-primary/10 text-primary";
+          } else {
+            node.className =
+              "rounded-xl px-3 py-2 text-sm font-medium transition-colors bg-primary/10 text-primary";
+          }
+        } else {
+          node.removeAttribute("aria-current");
+          if (isMobile) {
+            node.className =
+              "block rounded-xl px-3 py-2.5 text-sm font-medium text-text hover:bg-background";
+          } else {
+            node.className =
+              "rounded-xl px-3 py-2 text-sm font-medium transition-colors text-muted hover:bg-background hover:text-text";
+          }
+        }
+      });
+
+      // Close mobile menu after soft navigation
+      document.querySelectorAll("details[data-mobile-nav][open]").forEach(function (el) {
+        el.removeAttribute("open");
+      });
+    }
+
+    document.addEventListener("astro:page-load", updateActiveNav);
+    // First paint (in case page-load already fired before this bound)
+    if (document.readyState !== "loading") updateActiveNav();
+  })();
+</script>

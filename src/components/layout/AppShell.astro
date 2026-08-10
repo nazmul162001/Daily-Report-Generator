@@ -1,5 +1,6 @@
 ---
 import "../../styles/global.css";
+import { ClientRouter } from "astro:transitions";
 import Seo from "./Seo.astro";
 import Header from "./Header.astro";
 import Footer from "./Footer.astro";
@@ -19,6 +20,8 @@ const {
 <html lang="en" data-theme="light">
   <head>
     <Seo title={title} description={description} />
+    {/* SPA-style client-side routing (no full page reload between routes) */}
+    <ClientRouter />
     {/* Apply theme before paint to avoid flash */}
     <script is:inline>
       (function () {
@@ -54,7 +57,12 @@ const {
       Skip to content
     </a>
     <Header />
-    <main id="main-content" class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+    <main
+      id="main-content"
+      class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
+      transition:animate="fade"
+      transition:name="page-main"
+    >
       <slot />
     </main>
     <Footer />

@@ -123,44 +123,11 @@ html[data-theme="dark"] .theme-icon-moon {
 }
 
 /*
-  Circular theme reveal (View Transitions).
-  Kill every default morph/group animation — those make the
-  circle look centered and cause a hard “break” at the end.
-  Clip expansion is driven by WAAPI in ThemeToggle.
+  Theme circle helpers. Origin/clip styles are injected in ThemeToggle
+  for each toggle so they stay top-right of the viewport layer.
+  Keep automatic root name — never set view-transition-name:none on <html>.
 */
-::view-transition {
-  pointer-events: none;
+html.theme-revealing body * {
+  view-transition-name: none !important;
 }
 
-::view-transition-group(root) {
-  animation: none !important;
-}
-
-::view-transition-image-pair(root) {
-  isolation: auto;
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none !important;
-  mix-blend-mode: normal;
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-}
-
-::view-transition-old(root) {
-  z-index: 1;
-}
-
-::view-transition-new(root) {
-  z-index: 2147483646;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(root),
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none !important;
-  }
-}

@@ -8,10 +8,11 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
 
 | Layer | Tech |
 | --- | --- |
-| Framework | [Astro](https://astro.build) (static) |
-| UI islands | [React](https://react.dev) 19 |
+| Framework | [Astro](https://astro.build) 7 (static multi-page + SPA-style routing) |
+| UI islands | [React](https://react.dev) 19 (`client:load` islands per page) |
 | Language | TypeScript (strict) |
 | Styling | [Tailwind CSS](https://tailwindcss.com) v4 + CSS theme tokens (`data-theme`) |
+| Client routing | Astro **`ClientRouter`** (view transitions — no full reloads) |
 | Drag & drop | [@dnd-kit](https://dndkit.com) (`core`, `sortable`, `utilities`) |
 | Theme switch | View Transitions API (circular reveal from header toggle) |
 | Persistence | Browser LocalStorage (via `ReportRepository`) |
@@ -36,8 +37,28 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
   - `Ctrl/Cmd+Enter` — copy
   - `Ctrl/Cmd+S` — save
 - **Mobile-first** responsive layout
+- **SPA-style navigation** — soft client routing between pages (no full browser reload); see [Client-side navigation](#client-side-navigation)
 - **Dark / light mode** — see [Theme (dark / light mode)](#theme-dark--light-mode) below
 - **Star on GitHub** link in the header
+
+### Client-side navigation
+
+This is an **Astro multi-page app** with **React islands** — not a single React SPA. Full browser reloads used to happen because each route is a real HTML page and plain `<a href>` navigations load the next document.
+
+**Approach (scalable Astro pattern):** [`ClientRouter`](https://docs.astro.build/en/guides/view-transitions/) from `astro:transitions` in the shared layout (`AppShell`).
+
+| Behavior | Details |
+| --- | --- |
+| **Soft navigation** | Same-origin links are intercepted; next page HTML is fetched and swapped in-place |
+| **No full reload** | Header, footer, theme, and scroll chrome stay smooth; main content transitions with a fade |
+| **Persistent chrome** | Header + footer use `transition:persist` so they aren't destroyed on every route |
+| **Active nav** | Updated after each soft navigation (`astro:page-load`) |
+| **Prefetch** | Routes prefetch on hover (`prefetch` in `astro.config.mjs`) for snappy clicks |
+| **React islands** | Each page's form island hydrates on entry (`client:load`) — correct per-route state |
+| **Full reload when needed** | Add `data-astro-reload` on a link, or navigate off-site (e.g. GitHub) |
+| **Programmatic nav (React)** | `import { navigate } from "astro:transitions/client"` then `navigate("/daily-report")` |
+
+Key file: `src/components/layout/AppShell.astro` (`<ClientRouter />`).
 
 ### Theme (dark / light mode)
 
@@ -241,6 +262,7 @@ daily_report/
 - **Persistence** is isolated behind `ReportRepository` so LocalStorage can later be replaced with an API without rewriting the forms.
 - **Slack copy** uses plain text and HTML (`slackCopy` / `clipboard`) so pastes keep list structure and emphasis where Slack supports it.
 - **Theming** uses `data-theme` on `<html>` and CSS custom properties in `global.css`; the toggle lives in `ThemeToggle.astro` with a Telegram-style circular View Transition.
+- **Client routing** is enabled once in `AppShell` via `<ClientRouter />`. Prefer normal `<a href>` for links; use `navigate()` only for button-driven flows. Avoid rewriting the app as a single React Router SPA — Astro islands per route stay simpler and more scalable here.
 
 ## Routes
 
