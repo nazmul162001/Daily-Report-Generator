@@ -11,8 +11,9 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
 | Framework | [Astro](https://astro.build) (static) |
 | UI islands | [React](https://react.dev) 19 |
 | Language | TypeScript (strict) |
-| Styling | [Tailwind CSS](https://tailwindcss.com) v4 |
+| Styling | [Tailwind CSS](https://tailwindcss.com) v4 + CSS theme tokens (`data-theme`) |
 | Drag & drop | [@dnd-kit](https://dndkit.com) (`core`, `sortable`, `utilities`) |
+| Theme switch | View Transitions API (circular reveal from header toggle) |
 | Persistence | Browser LocalStorage (via `ReportRepository`) |
 
 ## Features
@@ -35,8 +36,43 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
   - `Ctrl/Cmd+Enter` — copy
   - `Ctrl/Cmd+S` — save
 - **Mobile-first** responsive layout
-- **Dark / light mode** — sun/moon toggle on the header (right); **defaults to light**; preference saved in LocalStorage
+- **Dark / light mode** — see [Theme (dark / light mode)](#theme-dark--light-mode) below
 - **Star on GitHub** link in the header
+
+### Theme (dark / light mode)
+
+Full-app light and dark themes with a polished switch in the header.
+
+| Detail | Behavior |
+| --- | --- |
+| **Default** | **Light mode** on first visit (does not follow the OS theme) |
+| **Control** | Sun / moon icon on the **far right** of the header |
+| **Persistence** | Choice stored in `localStorage` under the key `theme` (`"light"` \| `"dark"`) |
+| **No flash** | Inline boot script in `AppShell` applies the saved theme before paint |
+| **Icons** | Moon shown in light mode (click → dark); sun shown in dark mode (click → light) |
+
+**Light palette**
+- Cool blue-gray page background, white surfaces, classic blue primary
+
+**Dark palette**
+- Soft indigo night (not pure black): lifted navy surfaces, bright sky accent, subtle ambient glows
+
+**Circular reveal animation (Telegram-style)**
+- When you toggle, the new theme blooms as a **circle from the header control** (top-right) and expands across the screen
+- Implemented with the **View Transitions API** + animated `clip-path`
+- Respects **`prefers-reduced-motion`**: instant switch when reduced motion is preferred
+- Browsers without View Transitions fall back to an instant theme change
+
+**Key files**
+
+| File | Role |
+| --- | --- |
+| `src/components/layout/ThemeToggle.astro` | Toggle UI + circular reveal logic |
+| `src/components/layout/AppShell.astro` | FOUC-safe default / restore (`data-theme`) |
+| `src/components/layout/Header.astro` | Hosts the toggle on the right |
+| `src/styles/global.css` | Light/dark design tokens + view-transition base styles |
+
+Tokens are driven by `html[data-theme="light"]` / `html[data-theme="dark"]` so all existing Tailwind utilities (`bg-background`, `text-text`, `border-border`, `bg-primary`, …) update with the theme.
 
 ### Editable task lists (Today's Task & Daily Report)
 
@@ -204,6 +240,7 @@ daily_report/
 - **Task catalogs** (`taskLabels.ts` + LocalStorage) keep custom labels and sort order for Today's Task and Daily Report.
 - **Persistence** is isolated behind `ReportRepository` so LocalStorage can later be replaced with an API without rewriting the forms.
 - **Slack copy** uses plain text and HTML (`slackCopy` / `clipboard`) so pastes keep list structure and emphasis where Slack supports it.
+- **Theming** uses `data-theme` on `<html>` and CSS custom properties in `global.css`; the toggle lives in `ThemeToggle.astro` with a Telegram-style circular View Transition.
 
 ## Routes
 
