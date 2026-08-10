@@ -24,24 +24,35 @@ const reportCards = [
 export function HomeDashboard() {
   return (
     <div className="space-y-8">
-      <section className="rounded-3xl border border-border bg-surface px-5 py-8 shadow-sm sm:px-8 sm:py-10">
-        <p className="text-sm font-medium text-primary">Productivity toolkit</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-text sm:text-4xl">
+      <section
+        className="relative overflow-hidden rounded-3xl border border-border bg-surface px-5 py-8 sm:px-8 sm:py-10"
+        style={{ boxShadow: "var(--c-shadow)" }}
+      >
+        <div
+          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full opacity-70 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, color-mix(in srgb, var(--color-primary) 35%, transparent), transparent 70%)",
+          }}
+          aria-hidden
+        />
+        <p className="relative text-sm font-medium text-primary">Productivity toolkit</p>
+        <h1 className="relative mt-2 text-3xl font-bold tracking-tight text-text sm:text-4xl">
           Daily Report Generator
         </h1>
-        <p className="mt-3 max-w-2xl text-base text-muted sm:text-lg">
+        <p className="relative mt-3 max-w-2xl text-base text-muted sm:text-lg">
           Create, preview and copy your daily work reports in seconds.
         </p>
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="relative mt-6 flex flex-wrap gap-3">
           <a
             href="/today-task"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-hover"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-medium text-white shadow-sm ring-1 ring-primary/25 transition-colors hover:bg-primary-hover"
           >
             Start with Today&apos;s Task
           </a>
           <a
             href="/saved"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-surface px-5 text-sm font-medium text-text shadow-sm transition-colors hover:bg-background"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-background/80 px-5 text-sm font-medium text-text shadow-sm transition-colors hover:bg-background"
           >
             View saved reports
           </a>

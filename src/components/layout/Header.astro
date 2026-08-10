@@ -1,4 +1,6 @@
 ---
+import ThemeToggle from "./ThemeToggle.astro";
+
 const pathname = Astro.url.pathname;
 
 const links = [
@@ -18,10 +20,15 @@ function isActive(href: string): boolean {
 }
 ---
 
-<header class="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
+<header
+  class="sticky top-0 z-40 border-b border-border backdrop-blur-xl"
+  style="background-color: var(--c-header-bg);"
+>
   <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
     <a href="/" class="flex min-w-0 items-center gap-2.5" aria-label="Daily Report Generator home">
-      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-sm">
+      <span
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-sm ring-1 ring-white/15"
+      >
         DR
       </span>
       <span class="truncate">
@@ -52,7 +59,7 @@ function isActive(href: string): boolean {
         href={githubRepoUrl}
         target="_blank"
         rel="noopener noreferrer"
-        class="group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm font-medium text-text transition-all hover:border-text/20 hover:bg-surface hover:shadow-sm sm:h-10 sm:px-3"
+        class="group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm font-medium text-text transition-all hover:border-primary/30 hover:bg-surface hover:shadow-sm sm:h-10 sm:px-3"
         aria-label="Star on GitHub"
         title="Star on GitHub"
       >
@@ -83,7 +90,7 @@ function isActive(href: string): boolean {
 
       <details class="relative md:hidden">
         <summary
-          class="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-surface text-text shadow-sm"
+          class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-background text-text shadow-sm sm:h-10 sm:w-10"
           aria-label="Open menu"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
@@ -105,6 +112,8 @@ function isActive(href: string): boolean {
           ))}
         </div>
       </details>
+
+      <ThemeToggle />
     </div>
   </div>
 </header>

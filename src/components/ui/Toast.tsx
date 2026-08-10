@@ -50,9 +50,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={cn(
               "pointer-events-auto rounded-xl border px-4 py-3 text-sm shadow-lg transition-all",
               toast.type === "success" &&
-                "border-success/20 bg-surface text-text",
+                "border-success/30 bg-surface text-text shadow-success/10",
               toast.type === "error" &&
-                "border-danger/20 bg-surface text-text",
+                "border-danger/30 bg-surface text-text shadow-danger/10",
               toast.type === "info" && "border-border bg-surface text-text",
             )}
             role="status"

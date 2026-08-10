@@ -1,18 +1,64 @@
 @import "tailwindcss";
 
+/*
+  Theme tokens as real color values so Tailwind opacity modifiers
+  (bg-primary/10, etc.) work. Dark overrides --color-* on html.
+*/
 @theme {
-  --color-background: #f8fafc;
+  --color-background: #f1f5fb;
   --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
   --color-primary: #2563eb;
   --color-primary-hover: #1d4ed8;
   --color-text: #0f172a;
   --color-muted: #64748b;
   --color-border: #e2e8f0;
   --color-success: #16a34a;
-  --color-warning: #f59e0b;
+  --color-warning: #d97706;
   --color-danger: #dc2626;
   --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Soft glows + chrome (not utility colors) */
+:root,
+html[data-theme="light"] {
+  color-scheme: light;
+  --c-glow-a: rgba(37, 99, 235, 0.12);
+  --c-glow-b: rgba(14, 165, 233, 0.08);
+  --c-header-bg: rgba(255, 255, 255, 0.9);
+  --c-primary-soft: rgba(37, 99, 235, 0.12);
+  --c-shadow: 0 12px 32px -14px rgba(15, 23, 42, 0.14);
+  --c-tooltip-bg: #1e293b;
+  --c-tooltip-fg: #f8fafc;
+  --c-theme-meta: #2563eb;
+}
+
+/*
+  Soft indigo night — NOT pure black.
+  Lifted midtones + bright sky accents (readable, lively).
+*/
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-background: #1c2338;
+  --color-surface: #262f4a;
+  --color-surface-elevated: #2f3a58;
+  --color-primary: #5ec8ff;
+  --color-primary-hover: #8ad8ff;
+  --color-text: #f2f5fc;
+  --color-muted: #a8b4d0;
+  --color-border: #3d4968;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #fb7185;
+  --c-glow-a: rgba(94, 200, 255, 0.22);
+  --c-glow-b: rgba(167, 139, 250, 0.14);
+  --c-header-bg: rgba(38, 47, 74, 0.88);
+  --c-primary-soft: rgba(94, 200, 255, 0.18);
+  --c-shadow: 0 18px 40px -16px rgba(20, 28, 52, 0.55);
+  --c-tooltip-bg: #f2f5fc;
+  --c-tooltip-fg: #1c2338;
+  --c-theme-meta: #1c2338;
 }
 
 @layer base {
@@ -25,6 +71,18 @@
 
   body {
     @apply min-h-screen;
+    color: var(--color-text);
+    background-color: var(--color-background);
+    background-image:
+      radial-gradient(ellipse 95% 55% at 50% -18%, var(--c-glow-a), transparent 62%),
+      radial-gradient(ellipse 50% 40% at 100% 0%, var(--c-glow-b), transparent 55%),
+      radial-gradient(ellipse 45% 35% at 0% 100%, var(--c-glow-b), transparent 50%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-primary) 32%, transparent);
+    color: var(--color-text);
   }
 
   button:not(:disabled),
@@ -47,5 +105,62 @@
 
   *:focus-visible {
     @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  input,
+  textarea,
+  select {
+    color-scheme: inherit;
+  }
+}
+
+/* Theme toggle icon swap */
+html[data-theme="light"] .theme-icon-sun {
+  display: none;
+}
+html[data-theme="dark"] .theme-icon-moon {
+  display: none;
+}
+
+/*
+  Circular theme reveal (View Transitions).
+  Kill every default morph/group animation — those make the
+  circle look centered and cause a hard “break” at the end.
+  Clip expansion is driven by WAAPI in ThemeToggle.
+*/
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(root) {
+  animation: none !important;
+}
+
+::view-transition-image-pair(root) {
+  isolation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2147483646;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }

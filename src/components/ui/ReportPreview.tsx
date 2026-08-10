@@ -83,7 +83,7 @@ export function ReportPreview({
       </div>
 
       <pre
-        className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-white p-4 font-mono text-[13px] leading-relaxed text-text sm:text-sm"
+        className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-background p-4 font-mono text-[13px] leading-relaxed text-text sm:text-sm"
         aria-label="Generated report preview"
       >
         {content || "Your report preview will appear here."}
