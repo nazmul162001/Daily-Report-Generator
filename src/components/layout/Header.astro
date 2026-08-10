@@ -1,0 +1,73 @@
+---
+const pathname = Astro.url.pathname;
+
+const links = [
+  { href: "/today-task", label: "Today's Task" },
+  { href: "/daily-report", label: "Daily Report" },
+  { href: "/detailed-report", label: "Detailed Report" },
+  { href: "/saved", label: "Saved Reports" },
+];
+
+function isActive(href: string): boolean {
+  if (href === "/") {
+    return pathname === "/";
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+---
+
+<header class="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+    <a href="/" class="flex min-w-0 items-center gap-2.5" aria-label="Daily Report Generator home">
+      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-sm">
+        DR
+      </span>
+      <span class="truncate">
+        <span class="block text-sm font-semibold text-text sm:text-base">Daily Report Generator</span>
+        <span class="hidden text-xs text-muted sm:block">Fast Slack-ready reports</span>
+      </span>
+    </a>
+
+    <nav class="hidden items-center gap-1 md:flex" aria-label="Main">
+      {links.map((link) => (
+        <a
+          href={link.href}
+          class:list={[
+            "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+            isActive(link.href)
+              ? "bg-primary/10 text-primary"
+              : "text-muted hover:bg-background hover:text-text",
+          ]}
+          aria-current={isActive(link.href) ? "page" : undefined}
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+
+    <details class="relative md:hidden">
+      <summary
+        class="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-surface text-text shadow-sm"
+        aria-label="Open menu"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
+          <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </summary>
+      <div class="absolute right-0 mt-2 w-56 rounded-2xl border border-border bg-surface p-2 shadow-lg">
+        {links.map((link) => (
+          <a
+            href={link.href}
+            class:list={[
+              "block rounded-xl px-3 py-2.5 text-sm font-medium",
+              isActive(link.href) ? "bg-primary/10 text-primary" : "text-text hover:bg-background",
+            ]}
+            aria-current={isActive(link.href) ? "page" : undefined}
+          >
+            {link.label}
+          </a>
+        ))}
+      </div>
+    </details>
+  </div>
+</header>

@@ -1,0 +1,11 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { HomeDashboard } from "@/features/home/components/HomeDashboard";
+---
+
+<AppShell
+  title="Daily Report Generator"
+  description="Create, preview and copy your daily work reports in seconds."
+>
+  <HomeDashboard client:load />
+</AppShell>

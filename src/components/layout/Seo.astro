@@ -1,0 +1,22 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = "Daily Report Generator",
+  description = "Create, preview and copy your daily work reports in seconds.",
+} = Astro.props;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : Astro.url;
+---
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content={description} />
+<meta name="generator" content={Astro.generator} />
+<meta name="theme-color" content="#2563EB" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content="website" />
+<link rel="canonical" href={canonical.toString()} />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<title>{title}</title>

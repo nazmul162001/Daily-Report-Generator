@@ -1,0 +1,17 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { TodayTaskPage } from "@/features/today-task/components/TodayTaskPage";
+---
+
+<AppShell
+  title="Today's Task | Daily Report Generator"
+  description="Create today's task report with live preview and one-click copy."
+>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-text sm:text-3xl">Today's Task</h1>
+    <p class="mt-1 text-sm text-muted">
+      Plan and copy your task update for Slack.
+    </p>
+  </div>
+  <TodayTaskPage client:load />
+</AppShell>

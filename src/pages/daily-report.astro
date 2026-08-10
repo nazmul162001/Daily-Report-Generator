@@ -1,0 +1,17 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { DailyReportPage } from "@/features/daily-report/components/DailyReportPage";
+---
+
+<AppShell
+  title="Daily Report | Daily Report Generator"
+  description="Generate end-of-day reports with task statuses and live preview."
+>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-text sm:text-3xl">Daily Report</h1>
+    <p class="mt-1 text-sm text-muted">
+      Status-based daily update for your team channel.
+    </p>
+  </div>
+  <DailyReportPage client:load />
+</AppShell>
