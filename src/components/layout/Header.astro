@@ -8,6 +8,8 @@ const links = [
   { href: "/saved", label: "Saved Reports" },
 ];
 
+const githubRepoUrl = "https://github.com/nazmul162001/Daily-Report-Generator";
+
 function isActive(href: string): boolean {
   if (href === "/") {
     return pathname === "/";
@@ -28,46 +30,81 @@ function isActive(href: string): boolean {
       </span>
     </a>
 
-    <nav class="hidden items-center gap-1 md:flex" aria-label="Main">
-      {links.map((link) => (
-        <a
-          href={link.href}
-          class:list={[
-            "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-            isActive(link.href)
-              ? "bg-primary/10 text-primary"
-              : "text-muted hover:bg-background hover:text-text",
-          ]}
-          aria-current={isActive(link.href) ? "page" : undefined}
-        >
-          {link.label}
-        </a>
-      ))}
-    </nav>
-
-    <details class="relative md:hidden">
-      <summary
-        class="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-surface text-text shadow-sm"
-        aria-label="Open menu"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
-          <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
-      </summary>
-      <div class="absolute right-0 mt-2 w-56 rounded-2xl border border-border bg-surface p-2 shadow-lg">
+    <div class="flex items-center gap-2">
+      <nav class="hidden items-center gap-1 md:flex" aria-label="Main">
         {links.map((link) => (
           <a
             href={link.href}
             class:list={[
-              "block rounded-xl px-3 py-2.5 text-sm font-medium",
-              isActive(link.href) ? "bg-primary/10 text-primary" : "text-text hover:bg-background",
+              "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+              isActive(link.href)
+                ? "bg-primary/10 text-primary"
+                : "text-muted hover:bg-background hover:text-text",
             ]}
             aria-current={isActive(link.href) ? "page" : undefined}
           >
             {link.label}
           </a>
         ))}
-      </div>
-    </details>
+      </nav>
+
+      <a
+        href={githubRepoUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm font-medium text-text transition-all hover:border-text/20 hover:bg-surface hover:shadow-sm sm:h-10 sm:px-3"
+        aria-label="Star on GitHub"
+        title="Star on GitHub"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-4 w-4 text-muted transition-colors group-hover:fill-amber-400 group-hover:stroke-amber-500 group-hover:text-amber-500"
+          aria-hidden="true"
+        >
+          <path d="M12 3.2l2.35 4.76 5.25.76-3.8 3.7.9 5.22L12 15.9l-4.7 2.47.9-5.22-3.8-3.7 5.25-.76L12 3.2z" />
+        </svg>
+        <span>Star</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="h-3.5 w-3.5 text-muted"
+          aria-hidden="true"
+        >
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+        </svg>
+      </a>
+
+      <details class="relative md:hidden">
+        <summary
+          class="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-surface text-text shadow-sm"
+          aria-label="Open menu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
+            <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </summary>
+        <div class="absolute right-0 mt-2 w-56 rounded-2xl border border-border bg-surface p-2 shadow-lg">
+          {links.map((link) => (
+            <a
+              href={link.href}
+              class:list={[
+                "block rounded-xl px-3 py-2.5 text-sm font-medium",
+                isActive(link.href) ? "bg-primary/10 text-primary" : "text-text hover:bg-background",
+              ]}
+              aria-current={isActive(link.href) ? "page" : undefined}
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+      </details>
+    </div>
   </div>
 </header>
