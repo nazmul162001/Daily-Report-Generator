@@ -1,0 +1,304 @@
+---
+/**
+ * "Add to Home Screen" prompt.
+ * - Chromium: native install via beforeinstallprompt
+ * - iOS Safari: short Share → Add to Home Screen instructions
+ * Preference stored in localStorage until user installs or dismisses.
+ */
+---
+
+<div
+  id="install-prompt"
+  class="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex justify-center p-3 sm:p-4"
+  hidden
+  role="dialog"
+  aria-labelledby="install-prompt-title"
+  aria-live="polite"
+  transition:persist="install-prompt"
+>
+  <div
+    class="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-xl"
+    style="box-shadow: var(--c-shadow, 0 18px 40px -16px rgba(15,23,42,0.2));"
+  >
+    <div class="flex items-start gap-3 p-4">
+      <div
+        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-sm ring-1 ring-white/15"
+        aria-hidden="true"
+      >
+        DR
+      </div>
+      <div class="min-w-0 flex-1">
+        <p id="install-prompt-title" class="text-sm font-semibold text-text">
+          Add to Home Screen
+        </p>
+        <p id="install-prompt-body" class="mt-1 text-xs leading-relaxed text-muted">
+          Install Daily Report for one-tap access — works like an app on your home screen.
+        </p>
+      </div>
+      <button
+        type="button"
+        id="install-prompt-close"
+        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-background hover:text-text"
+        aria-label="Dismiss"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
+          <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <div id="install-prompt-ios" class="hidden border-t border-border bg-background/60 px-4 py-3 text-xs leading-relaxed text-muted">
+      Tap
+      <span class="mx-0.5 inline-flex items-center gap-0.5 font-semibold text-text">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inline h-3.5 w-3.5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4" />
+          <path stroke-linecap="round" d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+        </svg>
+        Share
+      </span>
+      then
+      <span class="font-semibold text-text">Add to Home Screen</span>.
+    </div>
+
+    <div class="flex flex-col gap-2 border-t border-border p-3 sm:flex-row sm:justify-end">
+      <button
+        type="button"
+        id="install-prompt-later"
+        class="inline-flex min-h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-text transition-colors hover:bg-surface"
+      >
+        Not now
+      </button>
+      <button
+        type="button"
+        id="install-prompt-action"
+        class="inline-flex min-h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-white shadow-sm ring-1 ring-primary/25 transition-colors hover:bg-primary-hover"
+      >
+        Add shortcut
+      </button>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    if (window.__installPromptInit) return;
+    window.__installPromptInit = true;
+
+    var STORAGE_KEY = "pwa-install-prompt";
+    var DISMISS_DAYS = 14;
+    var SHOW_DELAY_MS = 1800;
+    var deferredPrompt = null;
+    var showTimer = null;
+    var alreadyScheduled = false;
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function isStandalone() {
+      return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.matchMedia("(display-mode: minimal-ui)").matches ||
+        window.navigator.standalone === true
+      );
+    }
+
+    function isIos() {
+      var ua = window.navigator.userAgent || "";
+      return (
+        /iPad|iPhone|iPod/.test(ua) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+      );
+    }
+
+    function isSafari() {
+      var ua = window.navigator.userAgent || "";
+      return (
+        /Safari/.test(ua) &&
+        !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|Chromium|Android/.test(ua)
+      );
+    }
+
+    function readState() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function writeState(state) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (_) {}
+    }
+
+    function shouldSuppress() {
+      if (isStandalone()) return true;
+      var state = readState();
+      if (!state) return false;
+      if (state.installed) return true;
+      if (state.dismissedUntil && Date.now() < state.dismissedUntil) return true;
+      return false;
+    }
+
+    function dismiss(days) {
+      writeState({
+        dismissedUntil: Date.now() + days * 24 * 60 * 60 * 1000,
+      });
+      hide();
+    }
+
+    function markInstalled() {
+      writeState({ installed: true });
+      hide();
+    }
+
+    function hide() {
+      var root = $("install-prompt");
+      if (root) root.hidden = true;
+      if (showTimer) {
+        clearTimeout(showTimer);
+        showTimer = null;
+      }
+    }
+
+    function show() {
+      if (shouldSuppress()) return;
+      var root = $("install-prompt");
+      if (!root) return;
+
+      var iosHint = $("install-prompt-ios");
+      var action = $("install-prompt-action");
+      var body = $("install-prompt-body");
+      var canNative = !!deferredPrompt;
+
+      if (isIos() && isSafari()) {
+        if (iosHint) iosHint.classList.remove("hidden");
+        if (body) {
+          body.textContent =
+            "Add Daily Report to your iPhone/iPad home screen for quick access.";
+        }
+        if (action) action.textContent = "How to install";
+      } else if (canNative) {
+        if (iosHint) iosHint.classList.add("hidden");
+        if (body) {
+          body.textContent =
+            "Install Daily Report for one-tap access — works like an app on your home screen.";
+        }
+        if (action) action.textContent = "Add shortcut";
+      } else {
+        if (iosHint) iosHint.classList.add("hidden");
+        if (body) {
+          body.textContent =
+            "Open your browser menu and choose “Install app” or “Add to Home screen”.";
+        }
+        if (action) action.textContent = "Got it";
+      }
+
+      root.hidden = false;
+    }
+
+    function scheduleShow() {
+      if (shouldSuppress() || alreadyScheduled) return;
+      alreadyScheduled = true;
+      if (showTimer) clearTimeout(showTimer);
+      showTimer = setTimeout(function () {
+        show();
+      }, SHOW_DELAY_MS);
+    }
+
+    function wireUi() {
+      var later = $("install-prompt-later");
+      var close = $("install-prompt-close");
+      var action = $("install-prompt-action");
+
+      function onDismiss() {
+        dismiss(DISMISS_DAYS);
+      }
+
+      if (later && later.dataset.bound !== "1") {
+        later.dataset.bound = "1";
+        later.addEventListener("click", onDismiss);
+      }
+      if (close && close.dataset.bound !== "1") {
+        close.dataset.bound = "1";
+        close.addEventListener("click", onDismiss);
+      }
+      if (action && action.dataset.bound !== "1") {
+        action.dataset.bound = "1";
+        action.addEventListener("click", async function () {
+          if (deferredPrompt) {
+            try {
+              deferredPrompt.prompt();
+              var choice = await deferredPrompt.userChoice;
+              deferredPrompt = null;
+              if (choice && choice.outcome === "accepted") {
+                markInstalled();
+              } else {
+                dismiss(DISMISS_DAYS);
+              }
+            } catch (_) {
+              dismiss(7);
+            }
+            return;
+          }
+
+          if (isIos() && isSafari()) {
+            var iosHint = $("install-prompt-ios");
+            if (iosHint) iosHint.classList.remove("hidden");
+            return;
+          }
+
+          dismiss(DISMISS_DAYS);
+        });
+      }
+    }
+
+    window.addEventListener("beforeinstallprompt", function (event) {
+      event.preventDefault();
+      deferredPrompt = event;
+      if (!shouldSuppress()) scheduleShow();
+    });
+
+    window.addEventListener("appinstalled", function () {
+      deferredPrompt = null;
+      markInstalled();
+    });
+
+    function registerSw() {
+      if (!("serviceWorker" in navigator)) return;
+      var reg = function () {
+        navigator.serviceWorker.register("/sw.js").catch(function () {});
+      };
+      if (document.readyState === "complete") {
+        reg();
+      } else {
+        window.addEventListener("load", reg);
+      }
+    }
+
+    function init() {
+      registerSw();
+      wireUi();
+      if (shouldSuppress()) {
+        hide();
+        return;
+      }
+      scheduleShow();
+    }
+
+    document.addEventListener("astro:page-load", function () {
+      wireUi();
+      if (shouldSuppress()) hide();
+    });
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+  })();
+</script>

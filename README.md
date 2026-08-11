@@ -38,8 +38,25 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
   - `Ctrl/Cmd+S` — save
 - **Mobile-first** responsive layout
 - **SPA-style navigation** — soft client routing between pages (no full browser reload); see [Client-side navigation](#client-side-navigation)
+- **Add to Home Screen** — PWA install prompt so visitors can pin a home-screen shortcut (Android install UI + iOS instructions)
 - **Dark / light mode** — see [Theme (dark / light mode)](#theme-dark--light-mode) below
 - **Star on GitHub** link in the header
+
+### Add to Home Screen (PWA)
+
+Visitors can install the app as a home-screen shortcut:
+
+| Platform | Behavior |
+| --- | --- |
+| **Android / Chrome / Edge** | Banner after open → **Add shortcut** uses the browser install prompt |
+| **iPhone / iPad (Safari)** | Banner with steps: **Share → Add to Home Screen** |
+| **Desktop** | Hint to use the browser’s Install / Add to Home screen menu |
+
+- Preference stored in `localStorage` (`pwa-install-prompt`) — “Not now” hides the banner for 14 days  
+- Already-installed apps (standalone display mode) never see the banner  
+- Assets: `public/manifest.webmanifest`, `public/sw.js`, icons under `public/icons/`
+
+Key UI: `src/components/layout/InstallPrompt.astro`
 
 ### Client-side navigation
 

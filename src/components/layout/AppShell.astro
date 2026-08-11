@@ -4,6 +4,7 @@ import { ClientRouter } from "astro:transitions";
 import Seo from "./Seo.astro";
 import Header from "./Header.astro";
 import Footer from "./Footer.astro";
+import InstallPrompt from "./InstallPrompt.astro";
 
 interface Props {
   title?: string;
@@ -95,5 +96,6 @@ const {
       <slot />
     </main>
     <Footer />
+    <InstallPrompt />
   </body>
 </html>
