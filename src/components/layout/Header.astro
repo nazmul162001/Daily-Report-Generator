@@ -1,5 +1,6 @@
 ---
 import ThemeToggle from "./ThemeToggle.astro";
+import BrandMark from "@/components/icons/BrandMark.astro";
 
 const pathname = Astro.url.pathname;
 
@@ -39,9 +40,10 @@ function isActive(href: string): boolean {
       aria-label="Daily Report Generator home"
     >
       <span
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-sm ring-1 ring-white/15"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-sky-500 text-white shadow-sm ring-1 ring-white/15"
+        aria-hidden="true"
       >
-        DR
+        <BrandMark class="h-[1.15rem] w-[1.15rem]" />
       </span>
       <span class="truncate">
         <span class="block text-sm font-semibold text-text sm:text-base">Daily Report Generator</span>

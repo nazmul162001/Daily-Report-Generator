@@ -1,25 +1,49 @@
 import { Card } from "@/components/ui/Card";
+import {
+  IconDailyReport,
+  IconDetailedReport,
+  IconTodayTask,
+} from "@/components/icons/AppIcons";
+import type { ComponentType } from "react";
 
-const reportCards = [
+const reportCards: {
+  href: string;
+  title: string;
+  description: string;
+  Icon: ComponentType<{ className?: string }>;
+  iconWrap: string;
+  iconColor: string;
+}[] = [
   {
     href: "/today-task",
     title: "Today's Task",
     description: "Plan today's CMS tasks with a clean arrow list.",
-    icon: "T",
+    Icon: IconTodayTask,
+    // Soft amber/sky — plan your day
+    iconWrap: "bg-sky-500/12 ring-1 ring-sky-500/15 dark:bg-sky-400/15 dark:ring-sky-300/20",
+    iconColor: "text-sky-600 dark:text-sky-300",
   },
   {
     href: "/daily-report",
     title: "Daily Report",
     description: "End-of-day update with statuses for each task.",
-    icon: "D",
+    Icon: IconDailyReport,
+    // Soft emerald — completion / status
+    iconWrap:
+      "bg-emerald-500/12 ring-1 ring-emerald-500/15 dark:bg-emerald-400/15 dark:ring-emerald-300/20",
+    iconColor: "text-emerald-600 dark:text-emerald-300",
   },
   {
     href: "/detailed-report",
     title: "Detailed Report",
     description: "Work breakdown, goals, and stakeholder mentions.",
-    icon: "R",
+    Icon: IconDetailedReport,
+    // Soft violet — analysis / depth
+    iconWrap:
+      "bg-violet-500/12 ring-1 ring-violet-500/15 dark:bg-violet-400/15 dark:ring-violet-300/20",
+    iconColor: "text-violet-600 dark:text-violet-300",
   },
-] as const;
+];
 
 export function HomeDashboard() {
   return (
@@ -36,7 +60,9 @@ export function HomeDashboard() {
           }}
           aria-hidden
         />
-        <p className="relative text-sm font-medium text-primary">Productivity toolkit</p>
+        <p className="relative text-sm font-medium text-primary">
+          Productivity toolkit
+        </p>
         <h1 className="relative mt-2 text-3xl font-bold tracking-tight text-text sm:text-4xl">
           Daily Report Generator
         </h1>
@@ -70,10 +96,12 @@ export function HomeDashboard() {
           {reportCards.map((card) => (
             <Card
               key={card.href}
-              className="flex flex-col transition-shadow hover:shadow-md"
+              className="group flex flex-col transition-shadow hover:shadow-md"
             >
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
-                {card.icon}
+              <div
+                className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-105 ${card.iconWrap} ${card.iconColor}`}
+              >
+                <card.Icon className="h-6 w-6" />
               </div>
               <h3 className="text-base font-semibold text-text">{card.title}</h3>
               <p className="mt-2 flex-1 text-sm text-muted">{card.description}</p>

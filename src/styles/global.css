@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Use data-theme for Tailwind dark: utilities (not prefers-color-scheme) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /*
   Theme tokens as real color values so Tailwind opacity modifiers
   (bg-primary/10, etc.) work. Dark overrides --color-* on html.
