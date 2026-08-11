@@ -272,9 +272,11 @@
 
     function bindClick() {
       var btn = getBtn();
-      if (!btn || btn.dataset.bound === "1") return;
-      btn.dataset.bound = "1";
+      if (!btn) return;
+      // Always re-sync icon/label after ClientRouter navigations
       applyLabel(currentTheme());
+      if (btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
       btn.addEventListener("click", function (event) {
         event.preventDefault();
         toggleWithReveal(event);

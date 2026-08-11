@@ -22,24 +22,53 @@ const {
     <Seo title={title} description={description} />
     {/* SPA-style client-side routing (no full page reload between routes) */}
     <ClientRouter />
-    {/* Apply theme before paint to avoid flash */}
+    {/*
+      Theme bootstrap: default light, persist via localStorage.
+      ClientRouter soft-nav swaps HTML that hardcodes data-theme="light",
+      so we re-apply the saved theme on before-swap / after-swap / page-load.
+    */}
     <script is:inline>
       (function () {
-        try {
-          // Default is always light; only honor an explicit user choice.
-          var stored = localStorage.getItem("theme");
-          var theme = stored === "dark" ? "dark" : "light";
-          document.documentElement.setAttribute("data-theme", theme);
-          var meta = document.querySelector('meta[name="theme-color"]');
+        if (window.__themeBootstrap) return;
+        window.__themeBootstrap = true;
+
+        function readTheme() {
+          try {
+            return localStorage.getItem("theme") === "dark" ? "dark" : "light";
+          } catch (_) {
+            return "light";
+          }
+        }
+
+        function applyThemeTo(doc, theme) {
+          if (!doc || !doc.documentElement) return;
+          doc.documentElement.setAttribute("data-theme", theme);
+          var meta = doc.querySelector('meta[name="theme-color"]');
           if (meta) {
             meta.setAttribute(
               "content",
               theme === "dark" ? "#1c2338" : "#2563eb",
             );
           }
-        } catch (e) {
-          document.documentElement.setAttribute("data-theme", "light");
         }
+
+        function applySavedTheme() {
+          applyThemeTo(document, readTheme());
+        }
+
+        // First paint / hard reload
+        applySavedTheme();
+
+        // Soft nav: stamp theme onto the incoming document *before* DOM swap
+        document.addEventListener("astro:before-swap", function (event) {
+          if (event && event.newDocument) {
+            applyThemeTo(event.newDocument, readTheme());
+          }
+        });
+
+        // Soft nav: ensure live document still matches storage after swap
+        document.addEventListener("astro:after-swap", applySavedTheme);
+        document.addEventListener("astro:page-load", applySavedTheme);
       })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

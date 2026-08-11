@@ -40,8 +40,8 @@ export function BulletListEditor({
 
   return (
     <section>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold text-text">{title}</h3>
           {items.length === 0 ? (
             <p className="mt-0.5 text-xs text-muted">
@@ -53,7 +53,12 @@ export function BulletListEditor({
             </p>
           )}
         </div>
-        <Button size="sm" variant="secondary" onClick={addItem}>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={addItem}
+          className="w-full shrink-0 sm:w-auto"
+        >
           {addLabel}
         </Button>
       </div>
@@ -62,10 +67,10 @@ export function BulletListEditor({
         items={items}
         onReorder={onChange}
         ariaLabel={title}
-        className="gap-2"
+        className="gap-2.5 sm:gap-2"
         renderItem={(item, index, drag) => (
-          <SortableRowLayout drag={drag} className="items-center">
-            <div className="grid grid-cols-[1fr_auto] items-center gap-2">
+          <SortableRowLayout drag={drag} className="items-start sm:items-center">
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-background/50 p-2.5 sm:border-0 sm:bg-transparent sm:p-0">
               <Input
                 id={`${idPrefix}-${item.id}`}
                 value={item.text}

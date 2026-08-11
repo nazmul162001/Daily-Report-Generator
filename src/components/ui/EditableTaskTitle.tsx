@@ -44,7 +44,7 @@ export function EditableTaskTitle({ title, onSave }: EditableTaskTitleProps) {
 
   if (editing) {
     return (
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <input
           ref={inputRef}
           value={draft}
@@ -59,34 +59,38 @@ export function EditableTaskTitle({ title, onSave }: EditableTaskTitleProps) {
               cancel();
             }
           }}
-          className="min-w-0 flex-1 rounded-lg border border-primary bg-surface px-2.5 py-1.5 text-sm font-medium text-text outline-none ring-2 ring-primary/20"
+          className="min-w-0 w-full flex-1 rounded-lg border border-primary bg-surface px-2.5 py-2 text-sm font-medium text-text outline-none ring-2 ring-primary/20 sm:py-1.5"
           aria-label="Edit task name"
         />
-        <button
-          type="button"
-          onClick={commit}
-          className="cursor-pointer rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover"
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={cancel}
-          className="cursor-pointer rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold text-muted hover:text-text"
-        >
-          Cancel
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={commit}
+            className="cursor-pointer rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover sm:py-1.5"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={cancel}
+            className="cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-muted hover:text-text sm:py-1.5"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-1.5">
-      <p className="min-w-0 flex-1 text-sm font-medium text-text">{title}</p>
+    <div className="flex min-w-0 flex-1 items-start gap-1.5 sm:items-center">
+      <p className="min-w-0 flex-1 break-words text-sm font-medium leading-snug text-text">
+        {title}
+      </p>
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors hover:bg-background hover:text-primary"
+        className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors hover:bg-background hover:text-primary sm:h-8 sm:w-8"
         aria-label={`Edit “${title}”`}
         title="Edit task name"
       >

@@ -19,13 +19,13 @@ export function FixedTaskRow({
 
   return (
     <div
-      className={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-3 transition-colors ${
+      className={`flex items-start gap-2.5 rounded-xl border px-3 py-3 transition-colors sm:items-center sm:gap-3 sm:px-3.5 ${
         included
           ? "border-border bg-background/60"
           : "border-border/70 bg-background/30 opacity-70"
       }`}
     >
-      <label className="relative flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center">
+      <label className="relative mt-0.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center sm:mt-0">
         <input
           type="checkbox"
           checked={included}
@@ -51,18 +51,20 @@ export function FixedTaskRow({
         </span>
       </label>
 
-      <EditableTaskTitle title={task.title} onSave={onTitleChange} />
+      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <EditableTaskTitle title={task.title} onSave={onTitleChange} />
 
-      {onRemove ? (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="cursor-pointer rounded-lg px-2 py-1.5 text-xs font-semibold text-danger hover:bg-background"
-          aria-label={`Remove “${task.title}”`}
-        >
-          Remove
-        </button>
-      ) : null}
+        {onRemove ? (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="self-start cursor-pointer rounded-lg px-2 py-1.5 text-xs font-semibold text-danger hover:bg-background sm:self-auto sm:shrink-0"
+            aria-label={`Remove “${task.title}”`}
+          >
+            Remove
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
