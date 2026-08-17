@@ -4,6 +4,7 @@ import {
   createDefaultDailyReport,
   normalizeFixedTasks,
 } from "@/data/defaultTemplates";
+import { getTodayIsoDate } from "@/lib/date";
 import { getDraft, reportRepository, setPreferences } from "@/lib/repository";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { createId } from "@/lib/utils";
@@ -31,6 +32,7 @@ function DailyReportPageInner() {
     if (draft) {
       setReport({
         ...draft,
+        date: getTodayIsoDate(),
         tasks: normalizeFixedTasks(draft.tasks, true, "daily-report"),
       });
       showToast("Draft restored.", "info");
