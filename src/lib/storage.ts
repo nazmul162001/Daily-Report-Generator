@@ -1,19 +1,47 @@
 import { isBrowser } from "./utils";
 
+function parseJson<T>(raw: string, fallback: T): T {
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function readFrom(storage: Storage, key: string): string | null {
+  try {
+    return storage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeTo(storage: Storage, key: string, raw: string): boolean {
+  try {
+    storage.setItem(key, raw);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function getStorageItem<T>(key: string, fallback: T): T {
   if (!isBrowser()) {
     return fallback;
   }
 
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (raw === null) {
-      return fallback;
-    }
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
+  const localRaw = readFrom(window.localStorage, key);
+  if (localRaw !== null) {
+    return parseJson(localRaw, fallback);
   }
+
+  // Fallback if localStorage was full / blocked but session still has a copy
+  const sessionRaw = readFrom(window.sessionStorage, key);
+  if (sessionRaw !== null) {
+    return parseJson(sessionRaw, fallback);
+  }
+
+  return fallback;
 }
 
 export function setStorageItem<T>(key: string, value: T): boolean {
@@ -21,12 +49,22 @@ export function setStorageItem<T>(key: string, value: T): boolean {
     return false;
   }
 
+  let raw: string;
   try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-    return true;
+    raw = JSON.stringify(value);
   } catch {
     return false;
   }
+
+  const localOk = writeTo(window.localStorage, key, raw);
+  const sessionOk = writeTo(window.sessionStorage, key, raw);
+
+  if (localOk) {
+    return true;
+  }
+
+  // Quota / private-mode: keep a session copy so a refresh in this tab still works
+  return sessionOk;
 }
 
 export function removeStorageItem(key: string): boolean {
@@ -34,12 +72,18 @@ export function removeStorageItem(key: string): boolean {
     return false;
   }
 
+  let ok = true;
   try {
     window.localStorage.removeItem(key);
-    return true;
   } catch {
-    return false;
+    ok = false;
   }
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch {
+    ok = false;
+  }
+  return ok;
 }
 
 export const STORAGE_KEYS = {

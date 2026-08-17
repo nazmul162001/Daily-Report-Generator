@@ -41,7 +41,9 @@ function DailyReportPageInner() {
     }
     setPreferences({ lastReportType: "daily-report" });
     setHydrated(true);
-  }, [showToast]);
+    // Restore once per mount; don't re-run if toast identity changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const draftStatus = useDraftAutoSave(
     STORAGE_KEYS.draftDailyReport,
@@ -82,7 +84,7 @@ function DailyReportPageInner() {
       return;
     }
     const now = new Date().toISOString();
-    await reportRepository.saveReport({
+    const saved = await reportRepository.saveReport({
       id: createId("saved"),
       type: "daily-report",
       title: "Daily Report",
@@ -92,6 +94,10 @@ function DailyReportPageInner() {
       content: generated,
       payload: report,
     });
+    if (!saved) {
+      showToast("Couldn’t save to this browser. Storage may be full.", "error");
+      return;
+    }
     showToast("Report saved.");
   }, [generated, report, showToast, validate]);
 

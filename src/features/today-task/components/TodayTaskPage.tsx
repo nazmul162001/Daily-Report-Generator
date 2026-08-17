@@ -5,6 +5,7 @@ import {
   normalizeFixedTasks,
 } from "@/data/defaultTemplates";
 import { getDraft, reportRepository, setPreferences } from "@/lib/repository";
+import { getTodayIsoDate } from "@/lib/date";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { createId } from "@/lib/utils";
 import { useDraftAutoSave } from "@/hooks/useDraftAutoSave";
@@ -31,6 +32,7 @@ function TodayTaskPageInner() {
     if (draft) {
       setReport({
         ...draft,
+        date: getTodayIsoDate(),
         tasks: normalizeFixedTasks(draft.tasks, false, "today-task"),
       });
       showToast("Draft restored.", "info");
@@ -39,7 +41,9 @@ function TodayTaskPageInner() {
     }
     setPreferences({ lastReportType: "today-task" });
     setHydrated(true);
-  }, [showToast]);
+    // Restore once per mount; don't re-run if toast identity changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const draftStatus = useDraftAutoSave(
     STORAGE_KEYS.draftTodayTask,
@@ -84,7 +88,7 @@ function TodayTaskPageInner() {
       return;
     }
     const now = new Date().toISOString();
-    await reportRepository.saveReport({
+    const saved = await reportRepository.saveReport({
       id: createId("saved"),
       type: "today-task",
       title: "Today's Task",
@@ -94,6 +98,10 @@ function TodayTaskPageInner() {
       content: generated,
       payload: report,
     });
+    if (!saved) {
+      showToast("Couldn’t save to this browser. Storage may be full.", "error");
+      return;
+    }
     showToast("Report saved.");
   }, [generated, report, showToast, validate]);
 

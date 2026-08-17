@@ -5,6 +5,7 @@ import {
   normalizeDetailedReport,
 } from "@/data/defaultTemplates";
 import { getDraft, reportRepository, setPreferences } from "@/lib/repository";
+import { getTodayIsoDate } from "@/lib/date";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { createId } from "@/lib/utils";
 import { useDraftAutoSave } from "@/hooks/useDraftAutoSave";
@@ -35,14 +36,19 @@ function DetailedReportPageInner() {
   useEffect(() => {
     const draft = getDraft<DetailedReportData>(STORAGE_KEYS.draftDetailedReport);
     if (draft) {
-      setReport(normalizeDetailedReport(draft));
+      setReport({
+        ...normalizeDetailedReport(draft),
+        date: getTodayIsoDate(),
+      });
       showToast("Draft restored.", "info");
     } else {
       setReport(createDefaultDetailedReport());
     }
     setPreferences({ lastReportType: "detailed-report" });
     setHydrated(true);
-  }, [showToast]);
+    // Restore once per mount; don't re-run if toast identity changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const draftStatus = useDraftAutoSave(
     STORAGE_KEYS.draftDetailedReport,
@@ -97,7 +103,7 @@ function DetailedReportPageInner() {
       return;
     }
     const now = new Date().toISOString();
-    await reportRepository.saveReport({
+    const saved = await reportRepository.saveReport({
       id: createId("saved"),
       type: "detailed-report",
       title: "Detailed CMS Report",
@@ -107,6 +113,10 @@ function DetailedReportPageInner() {
       content: generated,
       payload: report,
     });
+    if (!saved) {
+      showToast("Couldn’t save to this browser. Storage may be full.", "error");
+      return;
+    }
     showToast("Report saved.");
   }, [generated, report, showToast, validate]);
 

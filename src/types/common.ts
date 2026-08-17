@@ -49,4 +49,4 @@ export interface AppPreferences {
   lastReportType: ReportType | null;
 }
 
-export type DraftStatus = "idle" | "saving" | "saved";
+export type DraftStatus = "idle" | "saving" | "saved" | "error";

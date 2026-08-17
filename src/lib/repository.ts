@@ -5,11 +5,12 @@ import {
   setStorageItem,
   STORAGE_KEYS,
 } from "@/lib/storage";
+import { saveTaskOrderFromTasks } from "@/lib/taskLabels";
 
 export interface ReportRepository {
   getReports(): Promise<SavedReportMeta[]>;
   getReport(id: string): Promise<SavedReportMeta | null>;
-  saveReport(report: SavedReportMeta): Promise<void>;
+  saveReport(report: SavedReportMeta): Promise<boolean>;
   deleteReport(id: string): Promise<void>;
 }
 
@@ -26,7 +27,7 @@ export class LocalStorageReportRepository implements ReportRepository {
     return reports.find((report) => report.id === id) ?? null;
   }
 
-  async saveReport(report: SavedReportMeta): Promise<void> {
+  async saveReport(report: SavedReportMeta): Promise<boolean> {
     const reports = getStorageItem<SavedReportMeta[]>(STORAGE_KEYS.savedReports, []);
     const index = reports.findIndex((item) => item.id === report.id);
     if (index >= 0) {
@@ -34,7 +35,7 @@ export class LocalStorageReportRepository implements ReportRepository {
     } else {
       reports.unshift(report);
     }
-    setStorageItem(STORAGE_KEYS.savedReports, reports);
+    return setStorageItem(STORAGE_KEYS.savedReports, reports);
   }
 
   async deleteReport(id: string): Promise<void> {
@@ -72,7 +73,35 @@ export function getDraft<T>(key: string): T | null {
 }
 
 export function setDraft<T>(key: string, draft: T): boolean {
-  return setStorageItem(key, draft);
+  const ok = setStorageItem(key, draft);
+  if (ok) {
+    syncTaskCatalogFromDraft(key, draft);
+  }
+  return ok;
+}
+
+function syncTaskCatalogFromDraft(key: string, draft: unknown): void {
+  if (!draft || typeof draft !== "object" || !("tasks" in draft)) {
+    return;
+  }
+
+  const scope =
+    key === STORAGE_KEYS.draftTodayTask
+      ? "today-task"
+      : key === STORAGE_KEYS.draftDailyReport
+        ? "daily-report"
+        : null;
+  if (!scope) {
+    return;
+  }
+
+  const tasks = (draft as { tasks?: Array<{ key?: string; title: string }> })
+    .tasks;
+  if (!Array.isArray(tasks) || tasks.length === 0) {
+    return;
+  }
+
+  saveTaskOrderFromTasks(scope, tasks);
 }
 
 export function clearDraft(key: string): void {

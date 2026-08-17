@@ -9,7 +9,7 @@ interface ReportPreviewProps {
   content: string;
   /** Optional HTML for rich paste (Slack compositor). */
   htmlContent?: string;
-  draftStatus?: "idle" | "saving" | "saved";
+  draftStatus?: "idle" | "saving" | "saved" | "error";
   onSave?: () => void;
   saveLabel?: string;
 }
@@ -55,6 +55,11 @@ export function ReportPreview({
           {draftStatus === "saved" ? (
             <span className="rounded-full bg-success/10 px-2 py-1 text-success">
               Saved locally
+            </span>
+          ) : null}
+          {draftStatus === "error" ? (
+            <span className="rounded-full bg-danger/10 px-2 py-1 text-danger">
+              Couldn’t save locally
             </span>
           ) : null}
         </div>
