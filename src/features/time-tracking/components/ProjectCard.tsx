@@ -40,15 +40,15 @@ export function ProjectCard({
             : formatMinutesShort(totalMinutes)
         }
         action={
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            <Button size="sm" variant="secondary" onClick={onAddTask}>
+          <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+            <Button size="sm" variant="secondary" onClick={onAddTask} className="flex-1 sm:flex-none">
               Add Task
             </Button>
             <Button
               size="sm"
               variant="ghost"
               onClick={onDeleteProject}
-              className="text-danger hover:bg-danger/10 hover:text-danger"
+              className="flex-1 text-danger hover:bg-danger/10 hover:text-danger sm:flex-none"
             >
               Delete
             </Button>

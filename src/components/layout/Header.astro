@@ -9,6 +9,7 @@ const links = [
   { href: "/daily-report", label: "Daily Report" },
   { href: "/detailed-report", label: "Detailed Report" },
   { href: "/time-tracking", label: "Time Tracking" },
+  { href: "/hours-calculator", label: "Hours Calculator" },
   { href: "/saved", label: "Saved Reports" },
 ];
 
@@ -25,19 +26,24 @@ function isActive(href: string): boolean {
 <!--
   Persist chrome across soft navigations so the header / theme toggle
   don't remount on every route. Active link styles refresh via script.
+  Desktop links show from xl up, and collapse to the hamburger if they overflow.
 -->
 <header
   id="site-header"
-  class="sticky top-0 z-40 border-b border-border backdrop-blur-xl"
+  class="sticky top-0 z-40 overflow-x-clip border-b border-border backdrop-blur-xl"
   style="background-color: var(--c-header-bg);"
   transition:persist="site-header"
   transition:name="site-header"
 >
-  <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+  <div
+    data-header-bar
+    class="mx-auto flex w-full max-w-7xl items-center gap-2 py-2.5 sm:gap-3 sm:py-3 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]"
+  >
     <a
       href="/"
       data-nav-link
-      class="flex min-w-0 items-center gap-2.5"
+      data-header-brand
+      class="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5 xl:flex-none"
       aria-label="Daily Report Generator home"
     >
       <span
@@ -46,37 +52,45 @@ function isActive(href: string): boolean {
       >
         <BrandMark class="h-[1.15rem] w-[1.15rem]" />
       </span>
-      <span class="truncate">
-        <span class="block text-sm font-semibold text-text sm:text-base">Daily Report Generator</span>
-        <span class="hidden text-xs text-muted sm:block">Fast Slack-ready reports</span>
+      <span class="min-w-0 truncate">
+        <span class="block truncate text-sm font-semibold text-text sm:text-base">
+          Daily Report Generator
+        </span>
+        <span class="hidden truncate text-xs text-muted lg:block">
+          Fast Slack-ready reports
+        </span>
       </span>
     </a>
 
-    <div class="flex items-center gap-2">
-      <nav class="hidden max-w-[min(100%,40rem)] items-center gap-0.5 overflow-x-auto md:flex lg:max-w-none lg:gap-1" aria-label="Main">
-        {links.map((link) => (
-          <a
-            href={link.href}
-            data-nav-link
-            data-nav-href={link.href}
-            class:list={[
-              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors lg:px-3",
-              isActive(link.href)
-                ? "bg-primary/10 text-primary"
-                : "text-muted hover:bg-background hover:text-text",
-            ]}
-            aria-current={isActive(link.href) ? "page" : undefined}
-          >
-            {link.label}
-          </a>
-        ))}
-      </nav>
+    <nav
+      data-desktop-nav
+      class="hidden min-w-0 items-center justify-center gap-0.5 xl:flex xl:flex-1"
+      aria-label="Main"
+    >
+      {links.map((link) => (
+        <a
+          href={link.href}
+          data-nav-link
+          data-nav-href={link.href}
+          class:list={[
+            "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors xl:px-3",
+            isActive(link.href)
+              ? "bg-primary/10 text-primary"
+              : "text-muted hover:bg-background hover:text-text",
+          ]}
+          aria-current={isActive(link.href) ? "page" : undefined}
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
 
+    <div data-header-actions class="flex shrink-0 items-center gap-1.5 sm:gap-2">
       <a
         href={githubRepoUrl}
         target="_blank"
         rel="noopener noreferrer"
-        class="group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm font-medium text-text transition-all hover:border-primary/30 hover:bg-surface hover:shadow-sm sm:h-10 sm:px-3"
+        class="group inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2 text-sm font-medium text-text transition-all hover:border-primary/30 hover:bg-surface hover:shadow-sm sm:h-10 sm:px-3"
         aria-label="Star on GitHub"
         title="Star on GitHub"
       >
@@ -93,42 +107,45 @@ function isActive(href: string): boolean {
         >
           <path d="M12 3.2l2.35 4.76 5.25.76-3.8 3.7.9 5.22L12 15.9l-4.7 2.47.9-5.22-3.8-3.7 5.25-.76L12 3.2z" />
         </svg>
-        <span>Star</span>
+        <span class="hidden sm:inline">Star</span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 16 16"
           fill="currentColor"
-          class="h-3.5 w-3.5 text-muted"
+          class="hidden h-3.5 w-3.5 text-muted sm:block"
           aria-hidden="true"
         >
           <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
         </svg>
       </a>
 
-      <details class="relative md:hidden" data-mobile-nav>
+      <details class="relative xl:hidden" data-mobile-nav>
         <summary
-          class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-background text-text shadow-sm sm:h-10 sm:w-10"
+          class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-xl border border-border bg-background text-text shadow-sm sm:h-10 sm:w-10 [&::-webkit-details-marker]:hidden"
           aria-label="Open menu"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5" aria-hidden="true">
             <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </summary>
-        <div class="absolute right-0 mt-2 w-56 rounded-2xl border border-border bg-surface p-2 shadow-lg">
-          {links.map((link) => (
-            <a
-              href={link.href}
-              data-nav-link
-              data-nav-href={link.href}
-              class:list={[
-                "block rounded-xl px-3 py-2.5 text-sm font-medium",
-                isActive(link.href) ? "bg-primary/10 text-primary" : "text-text hover:bg-background",
-              ]}
-              aria-current={isActive(link.href) ? "page" : undefined}
-            >
-              {link.label}
-            </a>
-          ))}
+        <div class="absolute right-0 z-50 mt-2 w-[min(18.5rem,calc(100vw-1.5rem))] rounded-2xl border border-border bg-surface p-2 shadow-lg">
+          <nav aria-label="Mobile">
+            {links.map((link) => (
+              <a
+                href={link.href}
+                data-nav-link
+                data-nav-href={link.href}
+                data-nav-mobile
+                class:list={[
+                  "block rounded-xl px-3 py-3 text-sm font-medium",
+                  isActive(link.href) ? "bg-primary/10 text-primary" : "text-text hover:bg-background",
+                ]}
+                aria-current={isActive(link.href) ? "page" : undefined}
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
         </div>
       </details>
 
@@ -136,6 +153,18 @@ function isActive(href: string): boolean {
     </div>
   </div>
 </header>
+
+<style is:global>
+  #site-header[data-nav-compact="true"] [data-desktop-nav] {
+    display: none !important;
+  }
+  #site-header[data-nav-compact="true"] [data-mobile-nav] {
+    display: block !important;
+  }
+  #site-header[data-nav-compact="true"] [data-header-brand] {
+    flex: 1 1 0%;
+  }
+</style>
 
 <script is:inline>
   (function () {
@@ -153,37 +182,76 @@ function isActive(href: string): boolean {
       links.forEach(function (node) {
         var href = node.getAttribute("data-nav-href") || "";
         var active = pathMatches(href, path);
-        var isMobile = node.classList.contains("block");
+        var isMobile = node.hasAttribute("data-nav-mobile");
 
         if (active) {
           node.setAttribute("aria-current", "page");
           if (isMobile) {
             node.className =
-              "block rounded-xl px-3 py-2.5 text-sm font-medium bg-primary/10 text-primary";
+              "block rounded-xl px-3 py-3 text-sm font-medium bg-primary/10 text-primary";
           } else {
             node.className =
-              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors lg:px-3 bg-primary/10 text-primary";
+              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors xl:px-3 bg-primary/10 text-primary";
           }
         } else {
           node.removeAttribute("aria-current");
           if (isMobile) {
             node.className =
-              "block rounded-xl px-3 py-2.5 text-sm font-medium text-text hover:bg-background";
+              "block rounded-xl px-3 py-3 text-sm font-medium text-text hover:bg-background";
           } else {
             node.className =
-              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors lg:px-3 text-muted hover:bg-background hover:text-text";
+              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors xl:px-3 text-muted hover:bg-background hover:text-text";
           }
         }
       });
 
-      // Close mobile menu after soft navigation
       document.querySelectorAll("details[data-mobile-nav][open]").forEach(function (el) {
         el.removeAttribute("open");
       });
     }
 
-    document.addEventListener("astro:page-load", updateActiveNav);
-    // First paint (in case page-load already fired before this bound)
-    if (document.readyState !== "loading") updateActiveNav();
+    function applyNavCompact() {
+      var header = document.getElementById("site-header");
+      if (!header) return;
+      var bar = header.querySelector("[data-header-bar]");
+      var nav = header.querySelector("[data-desktop-nav]");
+      if (!bar || !nav) return;
+
+      header.removeAttribute("data-nav-compact");
+
+      var navVisible = window.getComputedStyle(nav).display !== "none";
+      if (!navVisible) {
+        return;
+      }
+
+      if (bar.scrollWidth > bar.clientWidth + 2) {
+        header.setAttribute("data-nav-compact", "true");
+      }
+    }
+
+    var compactTimer = 0;
+    function scheduleCompact() {
+      window.clearTimeout(compactTimer);
+      compactTimer = window.setTimeout(applyNavCompact, 50);
+    }
+
+    document.addEventListener("astro:page-load", function () {
+      updateActiveNav();
+      applyNavCompact();
+    });
+    window.addEventListener("resize", scheduleCompact);
+
+    document.addEventListener("click", function (event) {
+      document.querySelectorAll("details[data-mobile-nav][open]").forEach(function (el) {
+        if (!el.contains(event.target)) {
+          el.removeAttribute("open");
+        }
+      });
+    });
+
+    if (document.readyState !== "loading") {
+      updateActiveNav();
+      applyNavCompact();
+    }
   })();
 </script>

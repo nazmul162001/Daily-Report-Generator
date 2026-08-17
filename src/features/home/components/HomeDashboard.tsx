@@ -73,22 +73,22 @@ export function HomeDashboard() {
         <p className="relative text-sm font-medium text-primary">
           Productivity toolkit
         </p>
-        <h1 className="relative mt-2 text-3xl font-bold tracking-tight text-text sm:text-4xl">
+        <h1 className="relative mt-2 text-2xl font-bold tracking-tight text-text sm:text-4xl">
           Daily Report Generator
         </h1>
         <p className="relative mt-3 max-w-2xl text-base text-muted sm:text-lg">
           Create, preview and copy your daily work reports in seconds.
         </p>
         <div className="relative mt-6 flex flex-wrap gap-3">
-          <a
+        <a
             href="/today-task"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-medium text-white shadow-sm ring-1 ring-primary/25 transition-colors hover:bg-primary-hover"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-primary px-5 text-sm font-medium text-white shadow-sm ring-1 ring-primary/25 transition-colors hover:bg-primary-hover sm:w-auto"
           >
             Start with Today&apos;s Task
           </a>
           <a
             href="/saved"
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-background/80 px-5 text-sm font-medium text-text shadow-sm transition-colors hover:bg-background"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-border bg-background/80 px-5 text-sm font-medium text-text shadow-sm transition-colors hover:bg-background sm:w-auto"
           >
             View saved reports
           </a>
@@ -102,7 +102,7 @@ export function HomeDashboard() {
             Choose a template or open Time Tracking — preview and totals update live.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {reportCards.map((card) => (
             <Card
               key={card.href}

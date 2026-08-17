@@ -1,0 +1,12 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { HoursCalculatorPage } from "@/features/hours-calculator/components/HoursCalculatorPage";
+---
+
+<AppShell
+  title="Hours Calculator | Daily Report Generator"
+  description="Convert minutes to hours with the same rounding used in Detailed Report."
+  mainClass="flex items-start justify-center sm:items-center"
+>
+  <HoursCalculatorPage client:load />
+</AppShell>

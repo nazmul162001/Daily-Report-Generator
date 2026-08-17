@@ -67,6 +67,7 @@ html[data-theme="dark"] {
 @layer base {
   html {
     @apply antialiased;
+    overflow-x: clip;
     font-family: var(--font-sans);
     color: var(--color-text);
     background-color: var(--color-background);

@@ -9,11 +9,13 @@ import InstallPrompt from "./InstallPrompt.astro";
 interface Props {
   title?: string;
   description?: string;
+  mainClass?: string;
 }
 
 const {
   title = "Daily Report Generator",
   description = "Create, preview and copy your daily work reports in seconds.",
+  mainClass,
 } = Astro.props;
 ---
 
@@ -89,7 +91,11 @@ const {
     <Header />
     <main
       id="main-content"
-      class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
+      class:list={[
+        "mx-auto w-full min-w-0 max-w-7xl flex-1 py-4 sm:py-8",
+        "pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]",
+        mainClass,
+      ]}
       transition:animate="fade"
       transition:name="page-main"
     >

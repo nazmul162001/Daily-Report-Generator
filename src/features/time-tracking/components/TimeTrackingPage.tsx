@@ -64,7 +64,7 @@ function TimeTrackingPageInner() {
         </div>
         <Button
           onClick={() => setAddProjectOpen(true)}
-          className="shrink-0"
+          className="w-full shrink-0 sm:w-auto"
           disabled={!tracking.hydrated}
         >
           Add Project

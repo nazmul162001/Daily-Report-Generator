@@ -83,7 +83,7 @@ export function TaskRow({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {task.status === "idle" ? (
             <>
               <Button size="sm" onClick={onStart}>
@@ -108,7 +108,7 @@ export function TaskRow({
 
           {task.status === "completed" ? (
             <>
-              <span className="text-sm font-medium text-text">
+              <span className="min-w-0 text-sm font-medium break-words text-text">
                 {formatDurationLabel(String(Math.round(minutes)), false)}
               </span>
               <Button
