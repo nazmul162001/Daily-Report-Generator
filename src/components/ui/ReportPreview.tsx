@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { copyToClipboard } from "@/lib/clipboard";
-import { Button } from "./Button";
+import { cn } from "@/lib/utils";
 import { Card } from "./Card";
 import { useToast } from "./Toast";
 
@@ -10,8 +10,23 @@ interface ReportPreviewProps {
   /** Optional HTML for rich paste (Slack compositor). */
   htmlContent?: string;
   draftStatus?: "idle" | "saving" | "saved" | "error";
-  onSave?: () => void;
-  saveLabel?: string;
+}
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-[1.15rem] w-[1.15rem]" aria-hidden>
+      <rect x="9" y="9" width="11" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="h-[1.15rem] w-[1.15rem]" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12.5l4.2 4.2L19 7.5" />
+    </svg>
+  );
 }
 
 export function ReportPreview({
@@ -19,22 +34,36 @@ export function ReportPreview({
   content,
   htmlContent,
   draftStatus = "idle",
-  onSave,
-  saveLabel = "Save Report",
 }: ReportPreviewProps) {
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef<number | null>(null);
   const charCount = content.length;
+  const canCopy = content.trim().length > 0;
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   async function handleCopy() {
-    const result = await copyToClipboard(content, htmlContent);
-    if (result.success) {
-      setCopied(true);
-      showToast("Report copied to clipboard.");
-      window.setTimeout(() => setCopied(false), 2000);
+    if (!canCopy) {
+      showToast("Nothing to copy.", "error");
       return;
     }
-    showToast(result.error, "error");
+    const result = await copyToClipboard(content, htmlContent);
+    if (!result.success) {
+      showToast(result.error, "error");
+      return;
+    }
+    setCopied(true);
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+    }
+    timerRef.current = window.setTimeout(() => setCopied(false), 1800);
   }
 
   return (
@@ -65,34 +94,52 @@ export function ReportPreview({
         </div>
       </div>
 
-      <div className="mb-4 shrink-0 flex flex-col gap-2 sm:flex-row">
-        <Button
-          onClick={handleCopy}
-          variant={copied ? "success" : "primary"}
-          fullWidth
-          aria-label="Copy report to clipboard"
-          title="Copy report (Ctrl/Cmd + Enter)"
+      <div
+        className={cn(
+          "relative min-h-0 flex-1 overflow-hidden rounded-xl border bg-background",
+          copied ? "copy-preview-flash border-success/40" : "border-border",
+        )}
+      >
+        <pre
+          className="max-h-full min-h-0 overflow-auto whitespace-pre-wrap break-words p-4 pb-14 font-mono text-[13px] leading-relaxed text-text sm:p-4 sm:pb-16 sm:text-sm"
+          aria-label="Generated report preview"
         >
-          {copied ? "Copied ✓" : "Copy Report"}
-        </Button>
-        {onSave ? (
-          <Button
-            variant="secondary"
-            onClick={onSave}
-            fullWidth
-            title="Save report (Ctrl/Cmd + S)"
-          >
-            {saveLabel}
-          </Button>
+          {content || "Your report preview will appear here."}
+        </pre>
+
+        <button
+          type="button"
+          onClick={handleCopy}
+          disabled={!canCopy}
+          aria-label={copied ? "Copied to clipboard" : "Copy report to clipboard"}
+          title="Copy report (Ctrl/Cmd + Enter)"
+          className={cn(
+            "copy-icon-btn z-10 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border shadow-sm backdrop-blur-md transition-all duration-200",
+            copied
+              ? "border-success/35 bg-success/15 text-success"
+              : "border-border bg-surface/88 text-muted hover:border-primary/35 hover:bg-primary/10 hover:text-primary active:scale-95",
+            "disabled:cursor-not-allowed disabled:opacity-40",
+          )}
+        >
+          <span key={copied ? "check" : "copy"} className="copy-icon-swap">
+            {copied ? <CheckIcon /> : <CopyIcon />}
+          </span>
+          {copied ? (
+            <>
+              <span className="copy-burst" aria-hidden />
+              <span className="copy-spark copy-spark-1" aria-hidden />
+              <span className="copy-spark copy-spark-2" aria-hidden />
+              <span className="copy-spark copy-spark-3" aria-hidden />
+              <span className="copy-spark copy-spark-4" aria-hidden />
+            </>
+          ) : null}
+        </button>
+        {copied ? (
+          <span className="copy-chip pointer-events-none z-10 rounded-full bg-success/15 px-2 py-1 text-[11px] font-semibold text-success">
+            Copied
+          </span>
         ) : null}
       </div>
-
-      <pre
-        className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-background p-4 font-mono text-[13px] leading-relaxed text-text sm:text-sm"
-        aria-label="Generated report preview"
-      >
-        {content || "Your report preview will appear here."}
-      </pre>
     </Card>
   );
 }

@@ -5,14 +5,12 @@ interface DailyReportPreviewProps {
   content: string;
   htmlContent?: string;
   draftStatus?: DraftStatus;
-  onSave?: () => void;
 }
 
 export function DailyReportPreview({
   content,
   htmlContent,
   draftStatus,
-  onSave,
 }: DailyReportPreviewProps) {
   return (
     <SharedPreview
@@ -20,7 +18,6 @@ export function DailyReportPreview({
       content={content}
       htmlContent={htmlContent}
       draftStatus={draftStatus}
-      onSave={onSave}
     />
   );
 }

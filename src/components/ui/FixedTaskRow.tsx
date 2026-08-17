@@ -19,13 +19,13 @@ export function FixedTaskRow({
 
   return (
     <div
-      className={`flex items-start gap-2.5 rounded-xl border px-3 py-3 transition-colors sm:items-center sm:gap-3 sm:px-3.5 ${
+      className={`flex items-center gap-2.5 rounded-xl border px-3 py-3 transition-colors sm:gap-3 sm:px-3.5 ${
         included
           ? "border-border bg-background/60"
           : "border-border/70 bg-background/30 opacity-70"
       }`}
     >
-      <label className="relative mt-0.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center sm:mt-0">
+      <label className="relative flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center">
         <input
           type="checkbox"
           checked={included}

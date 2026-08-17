@@ -5,14 +5,12 @@ interface TodayTaskPreviewProps {
   content: string;
   htmlContent?: string;
   draftStatus?: DraftStatus;
-  onSave?: () => void;
 }
 
 export function TodayTaskPreview({
   content,
   htmlContent,
   draftStatus,
-  onSave,
 }: TodayTaskPreviewProps) {
   return (
     <SharedPreview
@@ -20,7 +18,6 @@ export function TodayTaskPreview({
       content={content}
       htmlContent={htmlContent}
       draftStatus={draftStatus}
-      onSave={onSave}
     />
   );
 }

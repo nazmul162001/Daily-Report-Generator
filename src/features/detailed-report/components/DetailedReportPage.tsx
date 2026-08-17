@@ -5,10 +5,9 @@ import {
   normalizeDetailedReport,
 } from "@/data/defaultTemplates";
 import { applyTrackingRevisionDefault } from "@/features/time-tracking/revision";
-import { getDraft, reportRepository, setPreferences } from "@/lib/repository";
+import { getDraft, setPreferences } from "@/lib/repository";
 import { getTodayIsoDate } from "@/lib/date";
 import { STORAGE_KEYS } from "@/lib/storage";
-import { createId } from "@/lib/utils";
 import { useDraftAutoSave } from "@/hooks/useDraftAutoSave";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -134,34 +133,8 @@ function DetailedReportPageInner() {
     }
   }, [resolveReportForOutput, showToast, validate]);
 
-  const handleSave = useCallback(async () => {
-    if (!validate()) {
-      showToast("Please fix validation errors first.", "error");
-      return;
-    }
-    const resolved = resolveReportForOutput();
-    const now = new Date().toISOString();
-    const content = formatDetailedReport(resolved);
-    const saved = await reportRepository.saveReport({
-      id: createId("saved"),
-      type: "detailed-report",
-      title: "Detailed CMS Report",
-      date: resolved.date,
-      createdAt: now,
-      updatedAt: now,
-      content,
-      payload: resolved,
-    });
-    if (!saved) {
-      showToast("Couldn’t save to this browser. Storage may be full.", "error");
-      return;
-    }
-    showToast("Report saved.");
-  }, [resolveReportForOutput, showToast, validate]);
-
   useKeyboardShortcuts({
     onCopy: handleCopy,
-    onSave: handleSave,
     enabled: hydrated,
   });
 
@@ -176,7 +149,6 @@ function DetailedReportPageInner() {
         content={generated}
         htmlContent={generatedHtml}
         draftStatus={draftStatus}
-        onSave={handleSave}
       />
     </div>
   );

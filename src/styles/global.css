@@ -148,6 +148,17 @@ html[data-theme="dark"] .theme-icon-moon {
   }
 }
 
+@keyframes barIn {
+  from {
+    transform: scaleY(0);
+    opacity: 0.35;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
 /*
   Theme circle helpers. Origin/clip styles are injected in ThemeToggle
   for each toggle so they stay top-right of the viewport layer.
@@ -155,5 +166,253 @@ html[data-theme="dark"] .theme-icon-moon {
 */
 html.theme-revealing body * {
   view-transition-name: none !important;
+}
+
+@keyframes activityOrb {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate3d(14px, -12px, 0) scale(1.12);
+    opacity: 0.8;
+  }
+}
+
+@keyframes activityPulse {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+.activity-chart .recharts-wrapper,
+.activity-chart .recharts-surface {
+  overflow: visible !important;
+}
+
+.activity-chart .recharts-tooltip-wrapper {
+  z-index: 30;
+  pointer-events: none;
+}
+
+.activity-chart-orbs {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.activity-chart-orbs span {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(34px);
+  animation: activityOrb 9s ease-in-out infinite;
+}
+
+.activity-orb-a {
+  top: -18%;
+  left: 8%;
+  width: 9rem;
+  height: 9rem;
+  background: color-mix(in srgb, #2dd4bf 42%, transparent);
+}
+
+.activity-orb-b {
+  right: 6%;
+  bottom: -22%;
+  width: 11rem;
+  height: 11rem;
+  background: color-mix(in srgb, #818cf8 38%, transparent);
+  animation-delay: -3s;
+}
+
+.activity-orb-c {
+  top: 28%;
+  left: 42%;
+  width: 7rem;
+  height: 7rem;
+  background: color-mix(in srgb, #fbbf24 28%, transparent);
+  animation-delay: -5.5s;
+}
+
+.activity-pulse-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: activityPulse 2.2s ease-out infinite;
+}
+
+@keyframes refreshSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes refreshPulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 40%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+.refresh-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: refreshSpin 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.refresh-btn-pulse {
+  animation: refreshPulse 0.55s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-chart-orbs span,
+  .activity-pulse-ring,
+  .refresh-spin,
+  .refresh-btn-pulse {
+    animation: none !important;
+  }
+}
+
+@keyframes copyIconIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.45) rotate(-18deg);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(1.16) rotate(8deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes copyBurst {
+  0% {
+    transform: scale(0.35);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.85);
+    opacity: 0;
+  }
+}
+
+@keyframes copySpark {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.15);
+    opacity: 0;
+  }
+}
+
+@keyframes copyChipIn {
+  0% {
+    opacity: 0;
+    transform: translateX(8px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes copyPreviewFlash {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 38%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+.copy-icon-btn {
+  position: absolute;
+  top: auto;
+  right: 0.625rem;
+  bottom: 0.625rem;
+}
+
+.copy-icon-swap {
+  display: inline-flex;
+  animation: copyIconIn 0.42s cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+.copy-burst {
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--color-success) 70%, transparent);
+  animation: copyBurst 0.55s ease-out forwards;
+}
+
+.copy-spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin: -0.175rem 0 0 -0.175rem;
+  border-radius: 999px;
+  background: var(--color-success);
+  animation: copySpark 0.55s ease-out forwards;
+}
+
+.copy-spark-1 {
+  --dx: 14px;
+  --dy: -16px;
+}
+.copy-spark-2 {
+  --dx: -15px;
+  --dy: -12px;
+}
+.copy-spark-3 {
+  --dx: 16px;
+  --dy: 12px;
+}
+.copy-spark-4 {
+  --dx: -14px;
+  --dy: 14px;
+}
+
+.copy-chip {
+  position: absolute;
+  top: auto;
+  right: 3.5rem;
+  bottom: 0.875rem;
+  animation: copyChipIn 0.28s ease-out;
+}
+
+.copy-preview-flash {
+  animation: copyPreviewFlash 0.7s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copy-icon-swap,
+  .copy-burst,
+  .copy-spark,
+  .copy-chip,
+  .copy-preview-flash {
+    animation: none !important;
+  }
 }
 

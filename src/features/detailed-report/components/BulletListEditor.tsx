@@ -69,7 +69,7 @@ export function BulletListEditor({
         ariaLabel={title}
         className="gap-2.5 sm:gap-2"
         renderItem={(item, index, drag) => (
-          <SortableRowLayout drag={drag} className="items-start sm:items-center">
+          <SortableRowLayout drag={drag}>
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background/50 p-2.5 sm:border-0 sm:bg-transparent sm:p-0">
               <Input
                 id={`${idPrefix}-${item.id}`}

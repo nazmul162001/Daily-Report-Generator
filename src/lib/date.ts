@@ -74,6 +74,42 @@ export function addLocalDays(isoDate: string, delta: number): string {
   return `${year}-${month}-${day}`;
 }
 
+/** First day of the local calendar month that contains `isoDate`. */
+export function startOfLocalMonth(isoDate = getTodayIsoDate()): string {
+  const parts = parseIsoDateParts(isoDate);
+  if (!parts) {
+    return startOfLocalMonth(getTodayIsoDate());
+  }
+  return `${parts.year}-${String(parts.month).padStart(2, "0")}-01`;
+}
+
+export function eachLocalDay(fromIso: string, toIso: string): string[] {
+  const from = fromIso <= toIso ? fromIso : toIso;
+  const to = fromIso <= toIso ? toIso : fromIso;
+  const days: string[] = [];
+  let cursor = from;
+  while (cursor <= to) {
+    days.push(cursor);
+    cursor = addLocalDays(cursor, 1);
+    if (days.length > 400) {
+      break;
+    }
+  }
+  return days;
+}
+
+/** e.g. "Aug 18" */
+export function formatShortMonthDay(isoDate: string): string {
+  const parts = parseIsoDateParts(isoDate);
+  if (!parts) {
+    return isoDate;
+  }
+  return new Date(parts.year, parts.month - 1, parts.day).toLocaleString(
+    "en-US",
+    { month: "short", day: "2-digit" },
+  );
+}
+
 /** Inclusive cutoff for keeping `keepDays` local calendar days ending today. */
 export function getLocalRetentionCutoffIso(
   keepDays: number,

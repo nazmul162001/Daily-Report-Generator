@@ -33,18 +33,6 @@ export interface BulletItem {
   text: string;
 }
 
-export interface SavedReportMeta {
-  id: string;
-  type: ReportType;
-  title: string;
-  date: string;
-  createdAt: string;
-  updatedAt: string;
-  content: string;
-  /** Structured form payload for load/edit (backend-ready) */
-  payload?: unknown;
-}
-
 export interface AppPreferences {
   lastReportType: ReportType | null;
 }

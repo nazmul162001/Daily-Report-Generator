@@ -2,7 +2,7 @@
 
 Frontend-only productivity app for creating, previewing, and copying daily work reports in a **Slack-ready** format.
 
-Live workflow: pick a report type → edit tasks → live preview → copy / save. Everything runs in the browser with **LocalStorage** persistence (no backend).
+Live workflow: pick a report type → edit tasks → live preview → copy. Everything runs in the browser with **LocalStorage** persistence (no backend).
 
 ## Stack
 
@@ -15,7 +15,7 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
 | Client routing | Astro **`ClientRouter`** (view transitions — no full reloads) |
 | Drag & drop | [@dnd-kit](https://dndkit.com) (`core`, `sortable`, `utilities`) |
 | Theme switch | View Transitions API (circular reveal from header toggle) |
-| Persistence | Browser LocalStorage (via `ReportRepository`) |
+| Persistence | Browser LocalStorage (drafts, catalogs, time tracking) |
 
 ## Features
 
@@ -33,10 +33,8 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
 - **Live preview** — output updates as you type
 - **Copy to clipboard** — plain text + rich HTML for Slack paste
 - **Auto-saved drafts** — resume where you left off per report type
-- **Saved reports** — browse, reopen, and manage history (`/saved`)
 - **Keyboard shortcuts**
   - `Ctrl/Cmd+Enter` — copy
-  - `Ctrl/Cmd+S` — save
 - **Mobile-first** responsive layout
 - **SPA-style navigation** — soft client routing between pages (no full browser reload); see [Client-side navigation](#client-side-navigation)
 - **Add to Home Screen** — PWA install prompt so visitors can pin a home-screen shortcut (Android install UI + iOS instructions)
@@ -158,8 +156,8 @@ Powered by **@dnd-kit** with grip handles and smooth transform animations:
 
 ### Home
 
-- Hero + entry cards (reports + Time Tracking)
-- Saved reports available from nav / CTA (no duplicate dashboard widgets)
+- Activity at a glance (range filters + metric cards)
+- Performance activity chart from time tracking data
 
 ## Development
 
@@ -241,12 +239,6 @@ daily_report/
 │   │   ├── home/
 │   │   │   └── components/
 │   │   │       └── HomeDashboard.tsx
-│   │   ├── saved-reports/
-│   │   │   ├── components/
-│   │   │   │   ├── SavedReportCard.tsx
-│   │   │   │   └── SavedReports.tsx
-│   │   │   ├── storage.ts
-│   │   │   └── types.ts
 │   │   ├── time-tracking/
 │   │   │   ├── components/
 │   │   │   │   ├── ProjectCard.tsx
@@ -273,7 +265,7 @@ daily_report/
 │   │   ├── clipboard.ts            # Clipboard write helpers
 │   │   ├── date.ts
 │   │   ├── duration.ts             # Shared minutes → hours conversion
-│   │   ├── repository.ts          # ReportRepository (LocalStorage)
+│   │   ├── repository.ts          # Drafts and preferences (LocalStorage)
 │   │   ├── slackCopy.ts            # Slack-friendly HTML/plain
 │   │   ├── storage.ts              # Keys + local storage helpers
 │   │   ├── taskLabels.ts           # Task catalog / order / labels
@@ -284,7 +276,7 @@ daily_report/
 │   │   ├── daily-report.astro
 │   │   ├── detailed-report.astro
 │   │   ├── time-tracking.astro
-│   │   └── saved.astro
+│   │   └── hours-calculator.astro
 │   ├── styles/
 │   │   └── global.css
 │   └── types/
@@ -302,7 +294,7 @@ daily_report/
 - **Feature modules** under `src/features/*` own each report type (form, preview, format utilities).
 - **Shared UI** (drag handle, sortable list, inputs, preview shell) lives in `src/components/ui`.
 - **Task catalogs** (`taskLabels.ts` + LocalStorage) keep custom labels and sort order for Today's Task and Daily Report.
-- **Persistence** is isolated behind `ReportRepository` so LocalStorage can later be replaced with an API without rewriting the forms.
+- **Persistence** uses LocalStorage for drafts, task catalogs, and time tracking.
 - **Slack copy** uses plain text and HTML (`slackCopy` / `clipboard`) so pastes keep list structure and emphasis where Slack supports it.
 - **Theming** uses `data-theme` on `<html>` and CSS custom properties in `global.css`; the toggle lives in `ThemeToggle.astro` with a Telegram-style circular View Transition.
 - **Client routing** is enabled once in `AppShell` via `<ClientRouter />`. Prefer normal `<a href>` for links; use `navigate()` only for button-driven flows. Avoid rewriting the app as a single React Router SPA — Astro islands per route stay simpler and more scalable here.
@@ -315,7 +307,8 @@ daily_report/
 | `/today-task` | Today's Task |
 | `/daily-report` | Daily Report |
 | `/detailed-report` | Detailed Report |
-| `/saved` | Saved reports |
+| `/time-tracking` | Time Tracking |
+| `/hours-calculator` | Hours Calculator |
 
 ## License
 

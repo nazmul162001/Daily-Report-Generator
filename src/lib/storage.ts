@@ -88,7 +88,6 @@ export function removeStorageItem(key: string): boolean {
 
 export const STORAGE_KEYS = {
   preferences: "drg:preferences",
-  savedReports: "drg:saved-reports",
   draftTodayTask: "drg:draft:today-task",
   draftDailyReport: "drg:draft:daily-report",
   draftDetailedReport: "drg:draft:detailed-report",

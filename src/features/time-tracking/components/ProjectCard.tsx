@@ -44,7 +44,7 @@ function NoteIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
-      className="h-4 w-4"
+      className="hidden h-4 w-4 sm:block"
       aria-hidden
     >
       <path
@@ -98,7 +98,7 @@ export function ProjectCard({
               <Button
                 size="sm"
                 onClick={onAddNote}
-                className="flex-1 shadow-sm ring-2 ring-primary/30 sm:flex-none"
+                className="flex-1 whitespace-nowrap shadow-sm ring-2 ring-primary/30 sm:flex-none"
               >
                 <NoteIcon />
                 Add Note

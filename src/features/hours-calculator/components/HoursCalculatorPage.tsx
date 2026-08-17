@@ -8,6 +8,7 @@ import {
   formatHoursFromMinutes,
   parseMinutes,
 } from "@/lib/duration";
+import { cn } from "@/lib/utils";
 
 function sanitizeMinutesInput(raw: string): string {
   return raw.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1");
@@ -74,20 +75,29 @@ export function HoursCalculatorPage() {
           className="font-mono tabular-nums"
         />
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {PRESETS.map((preset) => (
-            <button
-              key={preset}
-              type="button"
-              onClick={() => {
-                setMinutes(preset);
-                setCopied(false);
-              }}
-              className="inline-flex min-h-10 flex-1 cursor-pointer items-center justify-center rounded-full border border-border bg-background px-3 text-sm text-muted transition-colors hover:border-primary/40 hover:text-text sm:min-h-9 sm:flex-none"
-            >
-              {preset} min
-            </button>
-          ))}
+        <div className="mt-3 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+          {PRESETS.map((preset, index) => {
+            const selected = minutes === preset;
+            return (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => {
+                  setMinutes(preset);
+                  setCopied(false);
+                }}
+                className={cn(
+                  "min-h-11 cursor-pointer items-center justify-center whitespace-nowrap rounded-xl border px-2 text-sm font-medium transition-colors sm:min-h-9 sm:flex-none sm:rounded-full sm:px-3.5",
+                  index >= 3 ? "hidden sm:inline-flex" : "inline-flex",
+                  selected
+                    ? "border-primary/50 bg-primary/15 text-primary"
+                    : "border-border bg-background text-muted hover:border-primary/40 hover:text-text",
+                )}
+              >
+                {preset} min
+              </button>
+            );
+          })}
         </div>
 
         <div

@@ -2,22 +2,18 @@ import { useEffect, useRef } from "react";
 
 interface UseKeyboardShortcutsOptions {
   onCopy?: () => void;
-  onSave?: () => void;
   enabled?: boolean;
 }
 
 export function useKeyboardShortcuts({
   onCopy,
-  onSave,
   enabled = true,
 }: UseKeyboardShortcutsOptions): void {
   const copyRef = useRef(onCopy);
-  const saveRef = useRef(onSave);
 
   useEffect(() => {
     copyRef.current = onCopy;
-    saveRef.current = onSave;
-  }, [onCopy, onSave]);
+  }, [onCopy]);
 
   useEffect(() => {
     if (!enabled) {
@@ -40,13 +36,6 @@ export function useKeyboardShortcuts({
       if (event.key === "Enter" && copyRef.current) {
         event.preventDefault();
         copyRef.current();
-        return;
-      }
-
-      if ((event.key === "s" || event.key === "S") && saveRef.current) {
-        // Allow Ctrl+S even when typing so save works while editing
-        event.preventDefault();
-        saveRef.current();
         return;
       }
 

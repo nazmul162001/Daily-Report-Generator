@@ -5,9 +5,8 @@ import {
   normalizeFixedTasks,
 } from "@/data/defaultTemplates";
 import { getTodayIsoDate } from "@/lib/date";
-import { getDraft, reportRepository, setPreferences } from "@/lib/repository";
+import { getDraft, setPreferences } from "@/lib/repository";
 import { STORAGE_KEYS } from "@/lib/storage";
-import { createId } from "@/lib/utils";
 import { useDraftAutoSave } from "@/hooks/useDraftAutoSave";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -78,32 +77,8 @@ function DailyReportPageInner() {
     }
   }, [generated, generatedHtml, showToast, validate]);
 
-  const handleSave = useCallback(async () => {
-    if (!validate()) {
-      showToast("Please fix validation errors first.", "error");
-      return;
-    }
-    const now = new Date().toISOString();
-    const saved = await reportRepository.saveReport({
-      id: createId("saved"),
-      type: "daily-report",
-      title: "Daily Report",
-      date: report.date,
-      createdAt: now,
-      updatedAt: now,
-      content: generated,
-      payload: report,
-    });
-    if (!saved) {
-      showToast("Couldn’t save to this browser. Storage may be full.", "error");
-      return;
-    }
-    showToast("Report saved.");
-  }, [generated, report, showToast, validate]);
-
   useKeyboardShortcuts({
     onCopy: handleCopy,
-    onSave: handleSave,
     enabled: hydrated,
   });
 
@@ -114,7 +89,6 @@ function DailyReportPageInner() {
         content={generated}
         htmlContent={generatedHtml}
         draftStatus={draftStatus}
-        onSave={handleSave}
       />
     </div>
   );

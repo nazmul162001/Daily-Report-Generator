@@ -20,8 +20,8 @@ export function TaskItem({ task, onChange, onRemove }: TaskItemProps) {
       }`}
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-3">
-        <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
-          <label className="relative mt-0.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center sm:mt-0">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <label className="relative flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center">
             <input
               type="checkbox"
               checked={included}

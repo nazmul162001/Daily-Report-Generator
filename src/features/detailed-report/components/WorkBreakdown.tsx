@@ -146,7 +146,7 @@ export function WorkBreakdown({ items, error, onChange }: WorkBreakdownProps) {
         ariaLabel="Work breakdown items"
         className="gap-2.5 sm:gap-2"
         renderItem={(item, index, drag) => (
-          <SortableRowLayout drag={drag} className="items-start sm:items-center">
+          <SortableRowLayout drag={drag}>
             <WorkBreakdownRow
               item={item}
               index={index}

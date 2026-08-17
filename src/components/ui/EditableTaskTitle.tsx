@@ -50,7 +50,7 @@ export function EditableTaskTitle({ title, onSave }: EditableTaskTitleProps) {
 
   return (
     <>
-      <div className="flex min-w-0 flex-1 items-start gap-1.5 sm:items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
         <p className="min-w-0 flex-1 break-words text-sm font-medium leading-snug text-text">
           {title}
         </p>
