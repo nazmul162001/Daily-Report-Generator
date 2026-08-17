@@ -11,10 +11,50 @@ interface ProjectCardProps {
   now: number;
   onAddTask: () => void;
   onDeleteProject: () => void;
+  onAddNote: () => void;
+  onViewNote: () => void;
   onStartTask: (taskId: string) => void;
   onCompleteTask: (taskId: string) => void;
   onEditTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
+}
+
+function InfoIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M12 11v6M12 8h.01" />
+    </svg>
+  );
+}
+
+function NoteIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M7 4h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"
+      />
+      <path strokeLinecap="round" d="M15 4v4h4M8 12h8M8 16h5" />
+    </svg>
+  );
 }
 
 export function ProjectCard({
@@ -22,6 +62,8 @@ export function ProjectCard({
   now,
   onAddTask,
   onDeleteProject,
+  onAddNote,
+  onViewNote,
   onStartTask,
   onCompleteTask,
   onEditTask,
@@ -29,6 +71,7 @@ export function ProjectCard({
 }: ProjectCardProps) {
   const totalMs = getProjectDurationMs(project, now, true);
   const totalMinutes = durationMsToMinutes(totalMs);
+  const hasNote = Boolean(project.note?.trim());
 
   return (
     <Card as="article">
@@ -40,15 +83,35 @@ export function ProjectCard({
             : formatMinutesShort(totalMinutes)
         }
         action={
-          <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+          <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto sm:justify-end">
+            {hasNote ? (
+              <button
+                type="button"
+                onClick={onViewNote}
+                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-primary/40 bg-primary/15 text-primary shadow-sm ring-2 ring-primary/20 transition-colors hover:bg-primary/25"
+                aria-label={`View note for ${project.name}`}
+                title="View project note"
+              >
+                <InfoIcon />
+              </button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={onAddNote}
+                className="flex-1 shadow-sm ring-2 ring-primary/30 sm:flex-none"
+              >
+                <NoteIcon />
+                Add Note
+              </Button>
+            )}
             <Button size="sm" variant="secondary" onClick={onAddTask} className="flex-1 sm:flex-none">
               Add Task
             </Button>
             <Button
               size="sm"
-              variant="ghost"
+              variant="danger"
               onClick={onDeleteProject}
-              className="flex-1 text-danger hover:bg-danger/10 hover:text-danger sm:flex-none"
+              className="flex-1 ring-2 ring-danger/35 sm:flex-none"
             >
               Delete
             </Button>

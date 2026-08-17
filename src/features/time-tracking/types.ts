@@ -27,6 +27,9 @@ export interface TrackingProject {
   caseNo: string;
   createdAt: number;
   tasks: TrackingTask[];
+  /** Case-level note for later (e.g. why the project took extra time). */
+  note: string | null;
+  noteUpdatedAt: number | null;
 }
 
 export interface TrackingDay {

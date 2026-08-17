@@ -2,6 +2,8 @@ import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { Textarea } from "@/components/ui/Textarea";
+import { copyToClipboard } from "@/lib/clipboard";
 import { formatDurationLabel, parseMinutes } from "@/lib/duration";
 
 interface AddProjectModalProps {
@@ -235,6 +237,130 @@ export function EditMinutesModal({
           hint="Enter minutes only. Hours are calculated automatically."
         />
       </form>
+    </Modal>
+  );
+}
+
+interface TaskNoteModalProps {
+  open: boolean;
+  mode: "add" | "view";
+  projectName: string;
+  note: string;
+  onClose: () => void;
+  onSave: (note: string) => void;
+}
+
+export function TaskNoteModal({
+  open,
+  mode,
+  projectName,
+  note,
+  onClose,
+  onSave,
+}: TaskNoteModalProps) {
+  const noteId = useId();
+  const [draft, setDraft] = useState(note);
+  const [editing, setEditing] = useState(mode === "add");
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setDraft(note);
+      setEditing(mode === "add");
+      setError("");
+      setCopied(false);
+    }
+  }, [open, note, mode]);
+
+  function handleSave() {
+    const trimmed = draft.trim();
+    if (mode === "add" && !trimmed) {
+      setError("Write a short note before saving.");
+      return;
+    }
+    onSave(trimmed);
+    onClose();
+  }
+
+  async function handleCopy() {
+    if (!note.trim()) {
+      return;
+    }
+    const result = await copyToClipboard(note);
+    if (result.success) {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      title={
+        editing
+          ? mode === "add"
+            ? `Add note · ${projectName}`
+            : `Edit note · ${projectName}`
+          : `Note · ${projectName}`
+      }
+      onClose={onClose}
+      panelClassName="max-w-lg"
+      footer={
+        editing ? (
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (mode === "view") {
+                  setDraft(note);
+                  setEditing(false);
+                  setError("");
+                  return;
+                }
+                onClose();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>Save</Button>
+          </>
+        ) : (
+          <>
+            <Button variant="secondary" onClick={onClose}>
+              Close
+            </Button>
+            <Button variant="secondary" onClick={handleCopy} disabled={!note.trim()}>
+              {copied ? "Copied" : "Copy"}
+            </Button>
+            <Button onClick={() => setEditing(true)}>Edit</Button>
+          </>
+        )
+      }
+    >
+      {editing ? (
+        <Textarea
+          id={noteId}
+          label="Note"
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            setError("");
+          }}
+          placeholder="e.g. Took extra time because of unexpected API errors and extra QA rounds."
+          autoFocus
+          rows={6}
+          error={error}
+          hint="Save a reason you can reuse if a manager asks later. Leave empty and save to remove."
+          className="min-h-[8.5rem]"
+        />
+      ) : (
+        <div className="max-h-[min(50vh,22rem)] overflow-y-auto rounded-xl border border-border bg-background px-3.5 py-3">
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
+            {note}
+          </p>
+        </div>
+      )}
     </Modal>
   );
 }

@@ -153,6 +153,8 @@ export function useTimeTracking() {
             caseNo: caseNo.trim(),
             createdAt: Date.now(),
             tasks: [],
+            note: null,
+            noteUpdatedAt: null,
           },
         ]),
       );
@@ -319,6 +321,26 @@ export function useTimeTracking() {
     [commit],
   );
 
+  const saveProjectNote = useCallback(
+    (projectId: string, note: string) => {
+      const trimmed = note.trim();
+      commit((current) =>
+        updateTodayProjects(current, (list) =>
+          list.map((project) =>
+            project.id === projectId
+              ? {
+                  ...project,
+                  note: trimmed || null,
+                  noteUpdatedAt: trimmed ? Date.now() : null,
+                }
+              : project,
+          ),
+        ),
+      );
+    },
+    [commit],
+  );
+
   const deleteProject = useCallback(
     (projectId: string) => {
       commit((current) =>
@@ -374,6 +396,7 @@ export function useTimeTracking() {
     cancelSwitch,
     completeTask,
     editTaskMinutes,
+    saveProjectNote,
     deleteProject,
     deleteTask,
     projectTotalMs,

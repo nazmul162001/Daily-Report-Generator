@@ -13,6 +13,7 @@ import {
   AddProjectModal,
   AddTaskModal,
   EditMinutesModal,
+  TaskNoteModal,
 } from "./TrackingModals";
 
 function TimeTrackingPageInner() {
@@ -28,6 +29,12 @@ function TimeTrackingPageInner() {
     taskId: string;
     number: string;
     minutes: number;
+  } | null>(null);
+  const [noteProject, setNoteProject] = useState<{
+    projectId: string;
+    projectName: string;
+    note: string;
+    mode: "add" | "view";
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<
     | { type: "project"; id: string; name: string }
@@ -45,6 +52,19 @@ function TimeTrackingPageInner() {
     const from = tracking.pendingSwitch.from;
     return `“${from.taskNumber}” on ${from.projectName} is still running. Completing it will save elapsed time, then “${tracking.pendingSwitch.taskNumber}” will start.`;
   }, [tracking.pendingSwitch]);
+
+  function openProjectNote(projectId: string, mode: "add" | "view") {
+    const project = tracking.projects.find((item) => item.id === projectId);
+    if (!project) {
+      return;
+    }
+    setNoteProject({
+      projectId,
+      projectName: project.name,
+      note: project.note ?? "",
+      mode,
+    });
+  }
 
   return (
     <div className="space-y-5">
@@ -97,6 +117,8 @@ function TimeTrackingPageInner() {
                   name: project.name,
                 })
               }
+              onAddNote={() => openProjectNote(project.id, "add")}
+              onViewNote={() => openProjectNote(project.id, "view")}
               onStartTask={(taskId) => {
                 const result = tracking.requestStart(project.id, taskId);
                 if (result === "started") {
@@ -175,6 +197,21 @@ function TimeTrackingPageInner() {
             minutes,
           );
           showToast("Time updated.");
+        }}
+      />
+
+      <TaskNoteModal
+        open={Boolean(noteProject)}
+        mode={noteProject?.mode ?? "add"}
+        projectName={noteProject?.projectName ?? ""}
+        note={noteProject?.note ?? ""}
+        onClose={() => setNoteProject(null)}
+        onSave={(note) => {
+          if (!noteProject) {
+            return;
+          }
+          tracking.saveProjectNote(noteProject.projectId, note);
+          showToast(note ? "Note saved." : "Note removed.");
         }}
       />
 

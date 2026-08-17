@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 
 interface ModalProps {
@@ -8,9 +9,17 @@ interface ModalProps {
   children: ReactNode;
   onClose: () => void;
   footer?: ReactNode;
+  panelClassName?: string;
 }
 
-export function Modal({ open, title, children, onClose, footer }: ModalProps) {
+export function Modal({
+  open,
+  title,
+  children,
+  onClose,
+  footer,
+  panelClassName,
+}: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +80,10 @@ export function Modal({ open, title, children, onClose, footer }: ModalProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative z-10 w-full max-w-md animate-[modalIn_200ms_cubic-bezier(0.22,1,0.36,1)] rounded-2xl border border-border bg-surface p-5 shadow-2xl focus:outline-none sm:p-6"
+        className={cn(
+          "relative z-10 w-full animate-[modalIn_200ms_cubic-bezier(0.22,1,0.36,1)] rounded-2xl border border-border bg-surface p-5 shadow-2xl focus:outline-none sm:p-6",
+          panelClassName ?? "max-w-md",
+        )}
         style={{
           boxShadow:
             "0 0 0 1px color-mix(in srgb, var(--color-border) 70%, transparent), 0 28px 60px -18px rgba(0, 0, 0, 0.55)",

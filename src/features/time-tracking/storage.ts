@@ -93,12 +93,43 @@ function normalizeProject(raw: unknown): TrackingProject | null {
         .filter((task): task is TrackingTask => task !== null)
     : [];
 
+  let note =
+    typeof raw.note === "string" && raw.note.trim() ? raw.note.trim() : null;
+  let noteUpdatedAt = asFiniteNumber(raw.noteUpdatedAt);
+
+  // Migrate notes previously stored on individual tasks.
+  if (!note && Array.isArray(raw.tasks)) {
+    const migrated = raw.tasks
+      .map((item) => {
+        if (!isRecord(item) || typeof item.note !== "string") {
+          return null;
+        }
+        const text = item.note.trim();
+        if (!text) {
+          return null;
+        }
+        const number =
+          typeof item.number === "string" ? item.number.trim() : "";
+        return number ? `${number}: ${text}` : text;
+      })
+      .filter((item): item is string => item !== null);
+    if (migrated.length > 0) {
+      note = migrated.join("\n\n");
+      const latest = raw.tasks
+        .map((item) => (isRecord(item) ? asFiniteNumber(item.noteUpdatedAt) : null))
+        .filter((value): value is number => value !== null);
+      noteUpdatedAt = latest.length > 0 ? Math.max(...latest) : Date.now();
+    }
+  }
+
   return {
     id: typeof raw.id === "string" && raw.id.trim() ? raw.id : createId("project"),
     name,
     caseNo: typeof raw.caseNo === "string" ? raw.caseNo.trim() : "",
     createdAt: asFiniteNumber(raw.createdAt) ?? Date.now(),
     tasks,
+    note,
+    noteUpdatedAt,
   };
 }
 
