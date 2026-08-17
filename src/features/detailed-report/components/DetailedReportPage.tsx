@@ -4,6 +4,7 @@ import {
   createDefaultDetailedReport,
   normalizeDetailedReport,
 } from "@/data/defaultTemplates";
+import { applyTrackingRevisionDefault } from "@/features/time-tracking/revision";
 import { getDraft, reportRepository, setPreferences } from "@/lib/repository";
 import { getTodayIsoDate } from "@/lib/date";
 import { STORAGE_KEYS } from "@/lib/storage";
@@ -35,20 +36,44 @@ function DetailedReportPageInner() {
 
   useEffect(() => {
     const draft = getDraft<DetailedReportData>(STORAGE_KEYS.draftDetailedReport);
+    const base = draft
+      ? {
+          ...normalizeDetailedReport(draft),
+          date: getTodayIsoDate(),
+        }
+      : createDefaultDetailedReport();
+    setReport(applyTrackingRevisionDefault(base));
     if (draft) {
-      setReport({
-        ...normalizeDetailedReport(draft),
-        date: getTodayIsoDate(),
-      });
       showToast("Draft restored.", "info");
-    } else {
-      setReport(createDefaultDetailedReport());
     }
     setPreferences({ lastReportType: "detailed-report" });
     setHydrated(true);
     // Restore once per mount; don't re-run if toast identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    function refreshRevisionDefault() {
+      setReport((current) => applyTrackingRevisionDefault(current));
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === "visible") {
+        refreshRevisionDefault();
+      }
+    }
+
+    window.addEventListener("focus", refreshRevisionDefault);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", refreshRevisionDefault);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [hydrated]);
 
   const draftStatus = useDraftAutoSave(
     STORAGE_KEYS.draftDetailedReport,
@@ -84,41 +109,55 @@ function DetailedReportPageInner() {
     return Object.keys(nextErrors).length === 0;
   }, [report]);
 
+  const resolveReportForOutput = useCallback((): DetailedReportData => {
+    const next = applyTrackingRevisionDefault(report);
+    if (next !== report) {
+      setReport(next);
+    }
+    return next;
+  }, [report]);
+
   const handleCopy = useCallback(async () => {
     if (!validate()) {
       showToast("Please fix validation errors first.", "error");
       return;
     }
-    const result = await copyToClipboard(generated, generatedHtml);
+    const resolved = resolveReportForOutput();
+    const result = await copyToClipboard(
+      formatDetailedReport(resolved),
+      formatDetailedReportHtml(resolved),
+    );
     if (result.success) {
       showToast("Report copied to clipboard.");
     } else {
       showToast(result.error, "error");
     }
-  }, [generated, generatedHtml, showToast, validate]);
+  }, [resolveReportForOutput, showToast, validate]);
 
   const handleSave = useCallback(async () => {
     if (!validate()) {
       showToast("Please fix validation errors first.", "error");
       return;
     }
+    const resolved = resolveReportForOutput();
     const now = new Date().toISOString();
+    const content = formatDetailedReport(resolved);
     const saved = await reportRepository.saveReport({
       id: createId("saved"),
       type: "detailed-report",
       title: "Detailed CMS Report",
-      date: report.date,
+      date: resolved.date,
       createdAt: now,
       updatedAt: now,
-      content: generated,
-      payload: report,
+      content,
+      payload: resolved,
     });
     if (!saved) {
       showToast("Couldn’t save to this browser. Storage may be full.", "error");
       return;
     }
     showToast("Report saved.");
-  }, [generated, report, showToast, validate]);
+  }, [resolveReportForOutput, showToast, validate]);
 
   useKeyboardShortcuts({
     onCopy: handleCopy,

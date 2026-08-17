@@ -100,4 +100,8 @@ export const STORAGE_KEYS = {
   taskCatalogToday: "drg:task-catalog:today-task",
   /** Full ordered task catalog (defaults + custom) for Daily Report. */
   taskCatalogDaily: "drg:task-catalog:daily-report",
+  /** Project & task time tracking (versioned, last 30 local days). */
+  timeTracking: "drg:time-tracking",
+  /** Secondary copy used if the primary time-tracking payload is corrupt. */
+  timeTrackingBackup: "drg:time-tracking:backup",
 } as const;

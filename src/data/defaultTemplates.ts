@@ -224,5 +224,6 @@ export function normalizeDetailedReport(
     tomorrowGoals: Array.isArray(draft.tomorrowGoals)
       ? draft.tomorrowGoals
       : base.tomorrowGoals,
+    revisionManuallyEdited: draft.revisionManuallyEdited,
   };
 }

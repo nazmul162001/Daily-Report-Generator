@@ -8,6 +8,7 @@ const links = [
   { href: "/today-task", label: "Today's Task" },
   { href: "/daily-report", label: "Daily Report" },
   { href: "/detailed-report", label: "Detailed Report" },
+  { href: "/time-tracking", label: "Time Tracking" },
   { href: "/saved", label: "Saved Reports" },
 ];
 
@@ -52,14 +53,14 @@ function isActive(href: string): boolean {
     </a>
 
     <div class="flex items-center gap-2">
-      <nav class="hidden items-center gap-1 md:flex" aria-label="Main">
+      <nav class="hidden max-w-[min(100%,40rem)] items-center gap-0.5 overflow-x-auto md:flex lg:max-w-none lg:gap-1" aria-label="Main">
         {links.map((link) => (
           <a
             href={link.href}
             data-nav-link
             data-nav-href={link.href}
             class:list={[
-              "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors lg:px-3",
               isActive(link.href)
                 ? "bg-primary/10 text-primary"
                 : "text-muted hover:bg-background hover:text-text",
@@ -161,7 +162,7 @@ function isActive(href: string): boolean {
               "block rounded-xl px-3 py-2.5 text-sm font-medium bg-primary/10 text-primary";
           } else {
             node.className =
-              "rounded-xl px-3 py-2 text-sm font-medium transition-colors bg-primary/10 text-primary";
+              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors lg:px-3 bg-primary/10 text-primary";
           }
         } else {
           node.removeAttribute("aria-current");
@@ -170,7 +171,7 @@ function isActive(href: string): boolean {
               "block rounded-xl px-3 py-2.5 text-sm font-medium text-text hover:bg-background";
           } else {
             node.className =
-              "rounded-xl px-3 py-2 text-sm font-medium transition-colors text-muted hover:bg-background hover:text-text";
+              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors lg:px-3 text-muted hover:bg-background hover:text-text";
           }
         }
       });

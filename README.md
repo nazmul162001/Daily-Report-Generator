@@ -26,6 +26,7 @@ Live workflow: pick a report type → edit tasks → live preview → copy / sav
 | **Today's Task** | Plan today's CMS / work tasks as an arrow list (`→`) |
 | **Daily Report** | End-of-day update with per-task status (**Completed** / **On-Going**) |
 | **Detailed Report** | Work breakdown (minutes/hours), goal review, goals for tomorrow, recipients |
+| **Time Tracking** | Project/task timers for the current local day; today's total can default Detailed Report **Revision** |
 
 ### Shared UX
 
@@ -144,9 +145,19 @@ Powered by **@dnd-kit** with grip handles and smooth transform animations:
 - Compact goal / tomorrow editors; empty sections omitted from copy
 - HTML-aware copy for bullets and bold categories in Slack
 
+### Time Tracking
+
+- Header tab **Time Tracking** (after Detailed Report) opens `/time-tracking`
+- Create multiple **projects** (name + case no) and **tasks** (task number as a string, e.g. `1-1`)
+- One running timer at a time; Start / Complete uses **timestamps** so elapsed time stays correct after refresh, sleep, or tab switch
+- Completed tasks can be edited in **minutes**; display uses the shared minutes → hours conversion
+- Per-project and **Today's Total** are summed from raw durations (not formatted strings)
+- LocalStorage, versioned, keyed by local calendar date, **last 30 days** retained, plus a backup key
+- Today's tracked minutes default the Detailed Report **Revision** field (never overwrites a manual edit; no tracking → existing 294 default)
+
 ### Home
 
-- Hero + **Report types** entry cards
+- Hero + entry cards (reports + Time Tracking)
 - Saved reports available from nav / CTA (no duplicate dashboard widgets)
 
 ## Development
@@ -223,7 +234,7 @@ daily_report/
 │   │   │   │   ├── RecipientsEditor.tsx
 │   │   │   │   ├── TomorrowGoals.tsx
 │   │   │   │   └── WorkBreakdown.tsx      # sortable time rows
-│   │   │   ├── duration.ts
+│   │   │   ├── duration.ts         # Re-exports @/lib/duration
 │   │   │   ├── types.ts
 │   │   │   └── utils.ts
 │   │   ├── home/
@@ -235,6 +246,18 @@ daily_report/
 │   │   │   │   └── SavedReports.tsx
 │   │   │   ├── storage.ts
 │   │   │   └── types.ts
+│   │   ├── time-tracking/
+│   │   │   ├── components/
+│   │   │   │   ├── ProjectCard.tsx
+│   │   │   │   ├── TaskRow.tsx
+│   │   │   │   ├── TimeTrackingPage.tsx
+│   │   │   │   └── TrackingModals.tsx
+│   │   │   ├── revision.ts         # Detailed Report Revision default
+│   │   │   ├── storage.ts          # Versioned localStorage + 30-day prune
+│   │   │   ├── timer.ts            # Timestamp-based elapsed time
+│   │   │   ├── totals.ts
+│   │   │   ├── types.ts
+│   │   │   └── useTimeTracking.ts
 │   │   └── today-task/
 │   │       ├── components/
 │   │       │   ├── TodayTaskForm.tsx
@@ -248,6 +271,7 @@ daily_report/
 │   ├── lib/
 │   │   ├── clipboard.ts            # Clipboard write helpers
 │   │   ├── date.ts
+│   │   ├── duration.ts             # Shared minutes → hours conversion
 │   │   ├── repository.ts          # ReportRepository (LocalStorage)
 │   │   ├── slackCopy.ts            # Slack-friendly HTML/plain
 │   │   ├── storage.ts              # Keys + local storage helpers
@@ -258,6 +282,7 @@ daily_report/
 │   │   ├── today-task.astro
 │   │   ├── daily-report.astro
 │   │   ├── detailed-report.astro
+│   │   ├── time-tracking.astro
 │   │   └── saved.astro
 │   ├── styles/
 │   │   └── global.css

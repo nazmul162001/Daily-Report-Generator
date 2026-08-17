@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/Card";
 import {
   IconDailyReport,
   IconDetailedReport,
+  IconTimeTracking,
   IconTodayTask,
 } from "@/components/icons/AppIcons";
 import type { ComponentType } from "react";
@@ -42,6 +43,15 @@ const reportCards: {
     iconWrap:
       "bg-violet-500/12 ring-1 ring-violet-500/15 dark:bg-violet-400/15 dark:ring-violet-300/20",
     iconColor: "text-violet-600 dark:text-violet-300",
+  },
+  {
+    href: "/time-tracking",
+    title: "Time Tracking",
+    description: "Track project tasks with timers. Totals default today's Revision.",
+    Icon: IconTimeTracking,
+    iconWrap:
+      "bg-amber-500/12 ring-1 ring-amber-500/15 dark:bg-amber-400/15 dark:ring-amber-300/20",
+    iconColor: "text-amber-600 dark:text-amber-300",
   },
 ];
 
@@ -87,12 +97,12 @@ export function HomeDashboard() {
 
       <section>
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-text">Report types</h2>
+          <h2 className="text-lg font-semibold text-text">Get started</h2>
           <p className="text-sm text-muted">
-            Choose a template and fill the form — preview updates live.
+            Choose a template or open Time Tracking — preview and totals update live.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {reportCards.map((card) => (
             <Card
               key={card.href}

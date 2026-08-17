@@ -1,4 +1,5 @@
 import { Card, CardHeader } from "@/components/ui/Card";
+import { didRevisionFieldsChange } from "@/features/time-tracking/revision";
 import type { DetailedReportData } from "../types";
 import { GoalReview } from "./GoalReview";
 import { RecipientsEditor } from "./RecipientsEditor";
@@ -35,7 +36,18 @@ export function DetailedReportForm({
         <WorkBreakdown
           items={report.workBreakdown}
           error={errors.workBreakdown}
-          onChange={(workBreakdown) => onChange({ ...report, workBreakdown })}
+          onChange={(workBreakdown) =>
+            onChange({
+              ...report,
+              workBreakdown,
+              revisionManuallyEdited: didRevisionFieldsChange(
+                report.workBreakdown,
+                workBreakdown,
+              )
+                ? true
+                : report.revisionManuallyEdited,
+            })
+          }
         />
       </Card>
 

@@ -1,0 +1,17 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { TimeTrackingPage } from "@/features/time-tracking/components/TimeTrackingPage";
+---
+
+<AppShell
+  title="Time Tracking | Daily Report Generator"
+  description="Track project and task time. Totals default today's Detailed Report revision."
+>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-text sm:text-3xl">Time Tracking</h1>
+    <p class="mt-1 text-sm text-muted">
+      Projects, task timers, and today's totals. Last 30 days stay in this browser.
+    </p>
+  </div>
+  <TimeTrackingPage client:load />
+</AppShell>
