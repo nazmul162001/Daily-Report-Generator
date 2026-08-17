@@ -4,11 +4,13 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
+import { cn } from "@/lib/utils";
 import { formatDisplayDate } from "@/lib/date";
 import { formatDurationLabel, formatMinutesShort } from "@/lib/duration";
 import { durationMsToMinutes, getTaskDurationMs } from "../timer";
 import { useTimeTracking } from "../useTimeTracking";
 import { ProjectCard } from "./ProjectCard";
+import { TaskHistory } from "./TaskHistory";
 import {
   AddProjectModal,
   AddTaskModal,
@@ -16,9 +18,12 @@ import {
   TaskNoteModal,
 } from "./TrackingModals";
 
+type TrackingTab = "tracking" | "history";
+
 function TimeTrackingPageInner() {
   const { showToast } = useToast();
   const tracking = useTimeTracking();
+  const [tab, setTab] = useState<TrackingTab>("tracking");
   const [addProjectOpen, setAddProjectOpen] = useState(false);
   const [addTaskFor, setAddTaskFor] = useState<{
     id: string;
@@ -68,97 +73,157 @@ function TimeTrackingPageInner() {
 
   return (
     <div className="space-y-5">
-      <Card className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">
-            Today · {formatDisplayDate(tracking.today)}
-          </p>
-          <h2 className="mt-1 text-lg font-semibold text-text sm:text-xl">
-            Today&apos;s Total Tracking Time
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            {tracking.hydrated
-              ? `${formatMinutesShort(todayMinutes)} · ${formatDurationLabel(String(Math.round(todayMinutes)), false)}`
-              : "Loading today's totals…"}
-          </p>
-        </div>
-        <Button
-          onClick={() => setAddProjectOpen(true)}
-          className="w-full shrink-0 sm:w-auto"
-          disabled={!tracking.hydrated}
+      <div
+        className="flex rounded-2xl border border-border bg-surface p-1 shadow-sm"
+        role="tablist"
+        aria-label="Time tracking sections"
+      >
+        <button
+          type="button"
+          id="tab-tracking"
+          role="tab"
+          aria-selected={tab === "tracking"}
+          aria-controls="tracking-panel"
+          className={cn(
+            "min-h-11 flex-1 cursor-pointer rounded-xl px-3 text-sm font-medium transition-colors",
+            tab === "tracking"
+              ? "bg-primary text-white shadow-sm"
+              : "text-muted hover:bg-background hover:text-text",
+          )}
+          onClick={() => setTab("tracking")}
         >
-          Add Project
-        </Button>
-      </Card>
+          Time Tracking
+        </button>
+        <button
+          type="button"
+          id="tab-history"
+          role="tab"
+          aria-selected={tab === "history"}
+          aria-controls="history-panel"
+          className={cn(
+            "min-h-11 flex-1 cursor-pointer rounded-xl px-3 text-sm font-medium transition-colors",
+            tab === "history"
+              ? "bg-primary text-white shadow-sm"
+              : "text-muted hover:bg-background hover:text-text",
+          )}
+          onClick={() => setTab("history")}
+        >
+          Task History
+        </button>
+      </div>
 
-      {!tracking.hydrated ? (
-        <Card className="h-40 animate-pulse bg-background/60" />
-      ) : tracking.projects.length === 0 ? (
-        <EmptyState
-          title="No projects yet"
-          description="Create a project, add task numbers, and start a timer. Totals feed today's Detailed Report revision by default."
-          actionLabel="Add Project"
-          onAction={() => setAddProjectOpen(true)}
-        />
-      ) : (
-        <div className="flex flex-col gap-4">
-          {tracking.projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              now={tracking.now}
-              onAddTask={() =>
-                setAddTaskFor({ id: project.id, name: project.name })
-              }
-              onDeleteProject={() =>
-                setDeleteTarget({
-                  type: "project",
-                  id: project.id,
-                  name: project.name,
-                })
-              }
-              onAddNote={() => openProjectNote(project.id, "add")}
-              onViewNote={() => openProjectNote(project.id, "view")}
-              onStartTask={(taskId) => {
-                const result = tracking.requestStart(project.id, taskId);
-                if (result === "started") {
-                  showToast("Timer started.", "info");
+      <div
+        id="tracking-panel"
+        role="tabpanel"
+        aria-labelledby="tab-tracking"
+        hidden={tab !== "tracking"}
+        className="space-y-5"
+      >
+        <Card className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-primary">
+              Today · {formatDisplayDate(tracking.today)}
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-text sm:text-xl">
+              Today&apos;s Total Tracking Time
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              {tracking.hydrated
+                ? `${formatMinutesShort(todayMinutes)} · ${formatDurationLabel(String(Math.round(todayMinutes)), false)}`
+                : "Loading today's totals…"}
+            </p>
+          </div>
+          <Button
+            onClick={() => setAddProjectOpen(true)}
+            className="w-full shrink-0 sm:w-auto"
+            disabled={!tracking.hydrated}
+          >
+            Add Project
+          </Button>
+        </Card>
+
+        {!tracking.hydrated ? (
+          <Card className="h-40 animate-pulse bg-background/60" />
+        ) : tracking.projects.length === 0 ? (
+          <EmptyState
+            title="No projects yet"
+            description="Create a project, add task numbers, and start a timer. Totals feed today's Detailed Report revision by default."
+            actionLabel="Add Project"
+            onAction={() => setAddProjectOpen(true)}
+          />
+        ) : (
+          <div className="flex flex-col gap-4">
+            {tracking.projects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                now={tracking.now}
+                onAddTask={() =>
+                  setAddTaskFor({ id: project.id, name: project.name })
                 }
-              }}
-              onCompleteTask={(taskId) => {
-                tracking.completeTask(project.id, taskId);
-                showToast("Task completed.");
-              }}
-              onEditTask={(taskId) => {
-                const task = project.tasks.find((item) => item.id === taskId);
-                if (!task) {
-                  return;
+                onDeleteProject={() =>
+                  setDeleteTarget({
+                    type: "project",
+                    id: project.id,
+                    name: project.name,
+                  })
                 }
-                setEditTask({
-                  projectId: project.id,
-                  taskId,
-                  number: task.number,
-                  minutes: durationMsToMinutes(
-                    getTaskDurationMs(task, tracking.now),
-                  ),
-                });
-              }}
-              onDeleteTask={(taskId) => {
-                const task = project.tasks.find((item) => item.id === taskId);
-                if (!task) {
-                  return;
-                }
-                setDeleteTarget({
-                  type: "task",
-                  projectId: project.id,
-                  taskId,
-                  number: task.number,
-                });
-              }}
-            />
-          ))}
-        </div>
-      )}
+                onAddNote={() => openProjectNote(project.id, "add")}
+                onViewNote={() => openProjectNote(project.id, "view")}
+                onStartTask={(taskId) => {
+                  const result = tracking.requestStart(project.id, taskId);
+                  if (result === "started") {
+                    showToast("Timer started.", "info");
+                  }
+                }}
+                onCompleteTask={(taskId) => {
+                  tracking.completeTask(project.id, taskId);
+                  showToast("Task completed.");
+                }}
+                onEditTask={(taskId) => {
+                  const task = project.tasks.find((item) => item.id === taskId);
+                  if (!task) {
+                    return;
+                  }
+                  setEditTask({
+                    projectId: project.id,
+                    taskId,
+                    number: task.number,
+                    minutes: durationMsToMinutes(
+                      getTaskDurationMs(task, tracking.now),
+                    ),
+                  });
+                }}
+                onDeleteTask={(taskId) => {
+                  const task = project.tasks.find((item) => item.id === taskId);
+                  if (!task) {
+                    return;
+                  }
+                  setDeleteTarget({
+                    type: "task",
+                    projectId: project.id,
+                    taskId,
+                    number: task.number,
+                  });
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div
+        id="history-panel"
+        role="tabpanel"
+        aria-labelledby="tab-history"
+        hidden={tab !== "history"}
+      >
+        {tracking.hydrated ? (
+          <TaskHistory store={tracking.store} today={tracking.today} />
+        ) : (
+          <Card className="h-40 animate-pulse bg-background/60" />
+        )}
+      </div>
 
       <AddProjectModal
         open={addProjectOpen}

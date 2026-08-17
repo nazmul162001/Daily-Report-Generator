@@ -152,6 +152,7 @@ Powered by **@dnd-kit** with grip handles and smooth transform animations:
 - One running timer at a time; Start / Complete uses **timestamps** so elapsed time stays correct after refresh, sleep, or tab switch
 - Completed tasks can be edited in **minutes**; display uses the shared minutes → hours conversion
 - Per-project and **Today's Total** are summed from raw durations (not formatted strings)
+- In-page tabs: **Time Tracking** (today) and **Task History** (completed projects for the last 30 days, or a custom date range)
 - LocalStorage, versioned, keyed by local calendar date, **last 30 days** retained, plus a backup key
 - Today's tracked minutes default the Detailed Report **Revision** field (never overwrites a manual edit; no tracking → existing 294 default)
 

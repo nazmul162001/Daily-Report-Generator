@@ -400,6 +400,7 @@ export function useTimeTracking() {
     deleteProject,
     deleteTask,
     projectTotalMs,
+    store,
   };
 }
 

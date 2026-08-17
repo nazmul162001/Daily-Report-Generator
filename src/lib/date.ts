@@ -99,3 +99,76 @@ export function endOfLocalDayMs(isoDate: string): number {
   ).getTime();
 }
 
+export interface YearMonth {
+  year: number;
+  month: number;
+}
+
+export function getYearMonth(isoDate: string): YearMonth {
+  const parts = parseIsoDateParts(isoDate);
+  if (!parts) {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  }
+  return { year: parts.year, month: parts.month };
+}
+
+export function addYearMonths(
+  yearMonth: YearMonth,
+  delta: number,
+): YearMonth {
+  const date = new Date(yearMonth.year, yearMonth.month - 1 + delta, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+
+export function compareYearMonths(a: YearMonth, b: YearMonth): number {
+  if (a.year !== b.year) {
+    return a.year - b.year;
+  }
+  return a.month - b.month;
+}
+
+/** e.g. "Sep, 2026" */
+export function formatMonthYear(yearMonth: YearMonth): string {
+  const label = new Date(yearMonth.year, yearMonth.month - 1, 1).toLocaleString(
+    "en-US",
+    { month: "short", year: "numeric" },
+  );
+  return label.replace(" ", ", ");
+}
+
+export interface CalendarCell {
+  iso: string;
+  day: number;
+  inMonth: boolean;
+}
+
+/** Sunday-start 6×7 grid for a local calendar month. */
+export function getMonthGrid(yearMonth: YearMonth): CalendarCell[] {
+  const first = new Date(yearMonth.year, yearMonth.month - 1, 1);
+  const start = new Date(
+    yearMonth.year,
+    yearMonth.month - 1,
+    1 - first.getDay(),
+  );
+  const cells: CalendarCell[] = [];
+
+  for (let index = 0; index < 42; index += 1) {
+    const date = new Date(
+      start.getFullYear(),
+      start.getMonth(),
+      start.getDate() + index,
+    );
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    cells.push({
+      iso: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+      day,
+      inMonth: year === yearMonth.year && month === yearMonth.month,
+    });
+  }
+
+  return cells;
+}
+
