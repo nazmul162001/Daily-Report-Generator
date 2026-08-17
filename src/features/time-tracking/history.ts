@@ -1,4 +1,6 @@
-import { formatDurationLabel, formatMinutesShort } from "@/lib/duration";
+import { formatDurationLabel, formatHoursFromMinutes, formatMinutesShort } from "@/lib/duration";
+import { formatDisplayDate } from "@/lib/date";
+import { toCsv } from "@/lib/csv";
 import { getTaskDurationMs, durationMsToMinutes } from "./timer";
 import type { TimeTrackingStore, TrackingProject, TrackingTask } from "./types";
 
@@ -122,4 +124,38 @@ export function listCompletedHistory(
     totalMinutes,
     totalLabel: formatDurationLabel(String(Math.round(totalMinutes)), false),
   };
+}
+
+export function historyDayToCsv(day: HistoryDayGroup): string {
+  const rows: Array<Array<string | number>> = [
+    [
+      "Date",
+      "Project",
+      "Case No",
+      "Task Number",
+      "Status",
+      "Minutes",
+      "Hours",
+      "Duration",
+      "Note",
+    ],
+  ];
+
+  for (const project of day.projects) {
+    for (const task of project.tasks) {
+      rows.push([
+        formatDisplayDate(day.date),
+        project.name,
+        project.caseNo,
+        task.number,
+        "Completed",
+        Math.round(task.minutes * 100) / 100,
+        formatHoursFromMinutes(task.minutes),
+        task.durationLabel,
+        project.note ?? "",
+      ]);
+    }
+  }
+
+  return toCsv(rows);
 }

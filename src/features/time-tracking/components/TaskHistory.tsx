@@ -5,13 +5,14 @@ import { Card } from "@/components/ui/Card";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
+import { downloadCsv } from "@/lib/csv";
 import {
   formatDisplayDate,
   getLocalRetentionCutoffIso,
 } from "@/lib/date";
 import { formatDurationLabel, formatMinutesShort } from "@/lib/duration";
 import { cn } from "@/lib/utils";
-import { listCompletedHistory, type HistoryProject } from "../history";
+import { historyDayToCsv, listCompletedHistory, type HistoryDayGroup, type HistoryProject } from "../history";
 import { TIME_TRACKING_RETENTION_DAYS } from "../types";
 import type { TimeTrackingStore } from "../types";
 
@@ -48,6 +49,22 @@ function InfoIcon() {
     >
       <circle cx="12" cy="12" r="9" />
       <path strokeLinecap="round" d="M12 11v6M12 8h.01" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M5 19h14" />
     </svg>
   );
 }
@@ -108,6 +125,13 @@ export const TaskHistory = memo(function TaskHistory({
     range.from === range.to
       ? formatDisplayDate(range.from)
       : `${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
+
+  function downloadDayCsv(day: HistoryDayGroup) {
+    downloadCsv(
+      `task-history-${formatDisplayDate(day.date)}.csv`,
+      historyDayToCsv(day),
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -189,7 +213,7 @@ export const TaskHistory = memo(function TaskHistory({
         <div className="flex flex-col gap-5">
           {history.days.map((day) => (
             <section key={day.date} className="space-y-2">
-              <div className="sticky top-[4.5rem] z-10 -mx-1 flex items-baseline justify-between gap-3 rounded-xl bg-background/90 px-1 py-1.5 backdrop-blur-md sm:top-20">
+              <div className="sticky top-[4.5rem] z-10 -mx-1 flex items-center justify-between gap-3 rounded-xl bg-background/90 px-1 py-1 backdrop-blur-md sm:top-20">
                 <h3 className="text-sm font-semibold text-text">
                   {formatDisplayDate(day.date)}
                   {day.date === today ? (
@@ -198,11 +222,15 @@ export const TaskHistory = memo(function TaskHistory({
                     </span>
                   ) : null}
                 </h3>
-                <p className="text-xs text-muted">
-                  {day.projects.length} project
-                  {day.projects.length === 1 ? "" : "s"} · {day.taskCount} task
-                  {day.taskCount === 1 ? "" : "s"} · {day.totalLabel}
-                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => downloadDayCsv(day)}
+                  aria-label={`Download CSV for ${formatDisplayDate(day.date)}`}
+                >
+                  <DownloadIcon />
+                  Download CSV
+                </Button>
               </div>
               <div className="flex flex-col gap-2">
                 {day.projects.map((project) => (
