@@ -208,6 +208,7 @@ export function normalizeDetailedReport(
             category: item.category ?? "",
             minutes,
             isNA: Boolean(item.isNA),
+            minutesLocked: Boolean(item.minutesLocked) || Boolean(draft.revisionManuallyEdited && (item.category ?? "").trim().toLowerCase() === "revision"),
           };
         })
       : base.workBreakdown;

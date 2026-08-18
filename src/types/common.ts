@@ -26,6 +26,8 @@ export interface WorkBreakdownItem {
   /** Minutes only; copy output converts to minutes + hours. */
   minutes: string;
   isNA: boolean;
+  /** When true, live Activity time will not overwrite this row. */
+  minutesLocked?: boolean;
 }
 
 export interface BulletItem {

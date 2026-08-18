@@ -103,4 +103,6 @@ export const STORAGE_KEYS = {
   timeTracking: "drg:time-tracking",
   /** Secondary copy used if the primary time-tracking payload is corrupt. */
   timeTrackingBackup: "drg:time-tracking:backup",
+  /** Category work log for Detailed Report (meetings, reviews, timers). */
+  workLog: "drg:work-log",
 } as const;

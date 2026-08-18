@@ -5,9 +5,14 @@ import {
   normalizeDetailedReport,
 } from "@/data/defaultTemplates";
 import { applyTrackingRevisionDefault } from "@/features/time-tracking/revision";
+import { kindFromCategory } from "@/features/work-log/categories";
+import { applyLiveMinutes } from "@/features/work-log/totals";
+import { useWorkLog } from "@/features/work-log/useWorkLog";
+import { WorkLogPanel } from "@/features/work-log/WorkLogPanel";
 import { getDraft, setPreferences } from "@/lib/repository";
 import { getTodayIsoDate } from "@/lib/date";
 import { STORAGE_KEYS } from "@/lib/storage";
+import { cn } from "@/lib/utils";
 import { useDraftAutoSave } from "@/hooks/useDraftAutoSave";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -22,10 +27,14 @@ import { DetailedReportPreview } from "./DetailedReportPreview";
 
 function DetailedReportPageInner() {
   const { showToast } = useToast();
+  const workLog = useWorkLog();
   const [report, setReport] = useState<DetailedReportData>(() =>
     createDefaultDetailedReport(),
   );
   const [hydrated, setHydrated] = useState(false);
+  const [selectedBreakdownId, setSelectedBreakdownId] = useState<string | null>(
+    null,
+  );
   const [errors, setErrors] = useState<{
     recipients?: string;
     workBreakdown?: string;
@@ -47,42 +56,61 @@ function DetailedReportPageInner() {
     }
     setPreferences({ lastReportType: "detailed-report" });
     setHydrated(true);
-    // Restore once per mount; don't re-run if toast identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!hydrated) {
+    if (!hydrated || !workLog.hydrated) {
       return;
     }
 
-    function refreshRevisionDefault() {
-      setReport((current) => applyTrackingRevisionDefault(current));
+    function syncLive() {
+      setReport((current) => {
+        const withRevision = applyTrackingRevisionDefault(current);
+        const nextItems = applyLiveMinutes(
+          withRevision.workBreakdown,
+          workLog.day,
+          Date.now(),
+        );
+        if (nextItems === withRevision.workBreakdown && withRevision === current) {
+          return current;
+        }
+        return { ...withRevision, workBreakdown: nextItems };
+      });
     }
 
+    syncLive();
     function onVisibility() {
       if (document.visibilityState === "visible") {
-        refreshRevisionDefault();
+        syncLive();
       }
     }
-
-    window.addEventListener("focus", refreshRevisionDefault);
+    window.addEventListener("focus", syncLive);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      window.removeEventListener("focus", refreshRevisionDefault);
+      window.removeEventListener("focus", syncLive);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [hydrated]);
+  }, [hydrated, workLog.hydrated, workLog.day]);
 
   const draftStatus = useDraftAutoSave(
     STORAGE_KEYS.draftDetailedReport,
     report,
     hydrated,
   );
-  const generated = useMemo(() => formatDetailedReport(report), [report]);
+
+  const selectedItem = report.workBreakdown.find(
+    (item) => item.id === selectedBreakdownId,
+  );
+  const panelOpen = Boolean(selectedItem);
+
+  const generated = useMemo(
+    () => formatDetailedReport(report, workLog.day, workLog.now),
+    [report, workLog.day, workLog.now],
+  );
   const generatedHtml = useMemo(
-    () => formatDetailedReportHtml(report),
-    [report],
+    () => formatDetailedReportHtml(report, workLog.day, workLog.now),
+    [report, workLog.day, workLog.now],
   );
 
   const validate = useCallback((): boolean => {
@@ -103,18 +131,19 @@ function DetailedReportPageInner() {
       nextErrors.workBreakdown =
         "Enter minutes or mark as N/A for each active category.";
     }
-    // Goal Review / Goals for Tomorrow are optional — empty = omitted from copy
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }, [report]);
 
   const resolveReportForOutput = useCallback((): DetailedReportData => {
     const next = applyTrackingRevisionDefault(report);
-    if (next !== report) {
-      setReport(next);
+    const workBreakdown = applyLiveMinutes(next.workBreakdown, workLog.day, workLog.now);
+    const resolved = { ...next, workBreakdown };
+    if (resolved !== report) {
+      setReport(resolved);
     }
-    return next;
-  }, [report]);
+    return resolved;
+  }, [report, workLog.day, workLog.now]);
 
   const handleCopy = useCallback(async () => {
     if (!validate()) {
@@ -123,15 +152,15 @@ function DetailedReportPageInner() {
     }
     const resolved = resolveReportForOutput();
     const result = await copyToClipboard(
-      formatDetailedReport(resolved),
-      formatDetailedReportHtml(resolved),
+      formatDetailedReport(resolved, workLog.day, workLog.now),
+      formatDetailedReportHtml(resolved, workLog.day, workLog.now),
     );
     if (result.success) {
       showToast("Report copied to clipboard.");
     } else {
       showToast(result.error, "error");
     }
-  }, [resolveReportForOutput, showToast, validate]);
+  }, [resolveReportForOutput, showToast, validate, workLog.day, workLog.now]);
 
   useKeyboardShortcuts({
     onCopy: handleCopy,
@@ -139,17 +168,56 @@ function DetailedReportPageInner() {
   });
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div
+      className={cn(
+        "grid gap-6",
+        panelOpen
+          ? "xl:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)_minmax(0,0.95fr)] lg:grid-cols-2"
+          : "lg:grid-cols-2",
+      )}
+    >
       <DetailedReportForm
         report={report}
         errors={errors}
+        selectedBreakdownId={selectedBreakdownId}
+        logDay={workLog.day}
+        now={workLog.now}
+        onSelectBreakdown={(id) => {
+          if (!id) {
+            setSelectedBreakdownId(null);
+            return;
+          }
+          setSelectedBreakdownId((current) => (current === id ? null : id));
+        }}
         onChange={setReport}
       />
-      <DetailedReportPreview
-        content={generated}
-        htmlContent={generatedHtml}
-        draftStatus={draftStatus}
-      />
+
+      {selectedItem ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-30 bg-black/40 xl:hidden"
+            aria-label="Close log"
+            onClick={() => setSelectedBreakdownId(null)}
+          />
+          <div className="max-xl:fixed max-xl:inset-x-0 max-xl:bottom-0 max-xl:z-40 max-xl:p-3 xl:contents">
+            <WorkLogPanel
+              kind={kindFromCategory(selectedItem.category)}
+              category={selectedItem.category}
+              log={workLog}
+              onClose={() => setSelectedBreakdownId(null)}
+            />
+          </div>
+        </>
+      ) : null}
+
+      <div className={cn(panelOpen && "lg:col-span-2 xl:col-span-1")}>
+        <DetailedReportPreview
+          content={generated}
+          htmlContent={generatedHtml}
+          draftStatus={draftStatus}
+        />
+      </div>
     </div>
   );
 }

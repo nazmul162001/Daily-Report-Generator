@@ -207,7 +207,7 @@ export const TaskHistory = memo(function TaskHistory({
       {history.days.length === 0 ? (
         <EmptyState
           title="No completed projects"
-          description="Finish a task on Time Tracking and it will appear here. Try another date if you already have older work."
+          description="Finish a task and it will appear here. Try another date if you already have older work."
         />
       ) : (
         <div className="flex flex-col gap-5">

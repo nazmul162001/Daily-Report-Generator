@@ -1,5 +1,6 @@
 import { Card, CardHeader } from "@/components/ui/Card";
 import { didRevisionFieldsChange } from "@/features/time-tracking/revision";
+import type { WorkLogDay } from "@/features/work-log/types";
 import type { DetailedReportData } from "../types";
 import { GoalReview } from "./GoalReview";
 import { RecipientsEditor } from "./RecipientsEditor";
@@ -14,12 +15,20 @@ interface DetailedReportFormProps {
     goalReview?: string;
     tomorrowGoals?: string;
   };
+  selectedBreakdownId: string | null;
+  logDay: WorkLogDay;
+  now: number;
+  onSelectBreakdown: (id: string) => void;
   onChange: (report: DetailedReportData) => void;
 }
 
 export function DetailedReportForm({
   report,
   errors,
+  selectedBreakdownId,
+  logDay,
+  now,
+  onSelectBreakdown,
   onChange,
 }: DetailedReportFormProps) {
   return (
@@ -36,6 +45,10 @@ export function DetailedReportForm({
         <WorkBreakdown
           items={report.workBreakdown}
           error={errors.workBreakdown}
+          selectedId={selectedBreakdownId}
+          logDay={logDay}
+          now={now}
+          onSelect={onSelectBreakdown}
           onChange={(workBreakdown) =>
             onChange({
               ...report,
