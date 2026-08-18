@@ -8,7 +8,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { TooltipContentProps } from "recharts";
 import { formatDisplayDate, formatShortMonthDay } from "@/lib/date";
 import { formatHoursFromMinutes } from "@/lib/duration";
 import { cn } from "@/lib/utils";
@@ -161,7 +160,13 @@ function SeriesDot({
   );
 }
 
-function ChartTooltip({ active, payload }: TooltipContentProps) {
+function ChartTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload?: ChartRow }>;
+}) {
   if (!active || !payload?.length) {
     return null;
   }
@@ -212,6 +217,7 @@ function ChartTooltip({ active, payload }: TooltipContentProps) {
 export function ActivityChart({ days }: { days: InsightDay[] }) {
   const gradientId = useId().replace(/:/g, "");
   const reducedMotion = usePrefersReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<ThemeTokens>(readTheme);
   const [hidden, setHidden] = useState<Record<SeriesKey, boolean>>({
     projects: false,
@@ -220,6 +226,7 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
   const [flipTip, setFlipTip] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const root = document.documentElement;
     const apply = () => setTheme(readTheme());
     apply();
@@ -309,8 +316,9 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
         </div>
 
         <div className="relative h-[15.75rem] touch-pan-y px-1 pt-3 sm:h-[21rem] sm:px-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
+          {mounted ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
               key={chartKey}
               data={rows}
               margin={{ top: 12, right: 12, left: 0, bottom: 4 }}
@@ -422,7 +430,13 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
                 />
               ))}
             </AreaChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          ) : (
+            <div
+              className="h-full animate-pulse rounded-2xl bg-background/50"
+              aria-hidden
+            />
+          )}
         </div>
       </div>
     </div>

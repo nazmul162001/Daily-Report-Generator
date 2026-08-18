@@ -22,17 +22,16 @@ export const DEFAULT_WORK_BREAKDOWN: Array<{
   minutes: string;
   isNA: boolean;
 }> = [
-  // Defaults stored in minutes; hours shown: 4.9, 1.2, 1, 1, —, 1.7
-  { category: "Revision", minutes: "294", isNA: false },
-  { category: "Feedback Response", minutes: "72", isNA: false },
-  { category: "Meeting", minutes: "60", isNA: false },
+  { category: "Revision", minutes: "0", isNA: false },
+  { category: "Feedback Response", minutes: "0", isNA: false },
+  { category: "Meeting", minutes: "0", isNA: false },
   {
     category: "Question Response (Support & Learning)",
-    minutes: "60",
-    isNA: true,
+    minutes: "0",
+    isNA: false,
   },
-  { category: "Review", minutes: "", isNA: true },
-  { category: "Investigation", minutes: "102", isNA: false },
+  { category: "Review", minutes: "0", isNA: false },
+  { category: "Investigation", minutes: "0", isNA: false },
 ];
 
 export const DEFAULT_RECIPIENTS = [
@@ -208,6 +207,7 @@ export function normalizeDetailedReport(
             category: item.category ?? "",
             minutes,
             isNA: Boolean(item.isNA),
+            minutesLocked: Boolean(item.minutesLocked) || Boolean(draft.revisionManuallyEdited && (item.category ?? "").trim().toLowerCase() === "revision"),
           };
         })
       : base.workBreakdown;
@@ -226,4 +226,27 @@ export function normalizeDetailedReport(
       : base.tomorrowGoals,
     revisionManuallyEdited: draft.revisionManuallyEdited,
   };
+}
+
+/** New local day: start every row at 0 and unlock live minutes. */
+export function startOfDayWorkBreakdown(
+  items: WorkBreakdownItem[],
+): WorkBreakdownItem[] {
+  return items.map((item) => ({
+    ...item,
+    minutes: "0",
+    isNA: false,
+    minutesLocked: false,
+  }));
+}
+
+/** Same day: keep custom typed minutes, reset everything else to 0. */
+export function resetUnlockedBreakdownMinutes(
+  items: WorkBreakdownItem[],
+): WorkBreakdownItem[] {
+  return items.map((item) =>
+    item.minutesLocked
+      ? { ...item, isNA: false }
+      : { ...item, minutes: "0", isNA: false },
+  );
 }

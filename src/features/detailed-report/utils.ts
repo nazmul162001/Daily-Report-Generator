@@ -5,6 +5,9 @@ import {
 } from "./duration";
 import type { DetailedReportData } from "./types";
 import type { BulletItem } from "@/types/common";
+import { displayMinutesForItem } from "@/features/work-log/totals";
+import type { WorkLogDay } from "@/features/work-log/types";
+import { emptyDay } from "@/features/work-log/storage";
 
 function escapeHtml(value: string): string {
   return value
@@ -23,11 +26,27 @@ function filledGoals(items: BulletItem[]): string[] {
   return items.map((item) => item.text.trim()).filter(Boolean);
 }
 
+function isBreakdownNA(
+  item: DetailedReportData["workBreakdown"][number],
+  logDay: WorkLogDay,
+  now: number,
+): boolean {
+  if (item.isNA) {
+    return true;
+  }
+  const minutes = parseMinutes(displayMinutesForItem(item, logDay, now));
+  return minutes === null || minutes === 0;
+}
+
 /**
  * Plain-text preview / text/plain clipboard.
  * Goal sections omitted when empty.
  */
-export function formatDetailedReport(report: DetailedReportData): string {
+export function formatDetailedReport(
+  report: DetailedReportData,
+  logDay: WorkLogDay = emptyDay(),
+  now = Date.now(),
+): string {
   const lines: string[] = [];
 
   lines.push(formatRecipientsLine());
@@ -42,7 +61,10 @@ export function formatDetailedReport(report: DetailedReportData): string {
       continue;
     }
     lines.push(
-      `• ${category}: ${formatDurationLabel(item.minutes, item.isNA)}`,
+      `• ${category}: ${formatDurationLabel(
+        displayMinutesForItem(item, logDay, now),
+        isBreakdownNA(item, logDay, now),
+      )}`,
     );
   }
 
@@ -73,7 +95,11 @@ export function formatDetailedReport(report: DetailedReportData): string {
  * HTML for Slack rich paste.
  * Goal sections omitted when empty.
  */
-export function formatDetailedReportHtml(report: DetailedReportData): string {
+export function formatDetailedReportHtml(
+  report: DetailedReportData,
+  logDay: WorkLogDay = emptyDay(),
+  now = Date.now(),
+): string {
   const parts: string[] = [];
 
   const mentionSpans = DEFAULT_RECIPIENTS.map((name, index) => {
@@ -91,7 +117,10 @@ export function formatDetailedReportHtml(report: DetailedReportData): string {
     if (!category) {
       continue;
     }
-    const duration = formatDurationLabel(item.minutes, item.isNA);
+    const duration = formatDurationLabel(
+      displayMinutesForItem(item, logDay, now),
+      isBreakdownNA(item, logDay, now),
+    );
     parts.push(
       `<li><strong>${escapeHtml(category)}:</strong> ${escapeHtml(duration)}</li>`,
     );

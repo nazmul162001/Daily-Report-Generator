@@ -126,7 +126,7 @@ export function listCompletedHistory(
   };
 }
 
-export function historyDayToCsv(day: HistoryDayGroup): string {
+export function historyToCsv(history: HistoryResult): string {
   const rows: Array<Array<string | number>> = [
     [
       "Date",
@@ -141,21 +141,32 @@ export function historyDayToCsv(day: HistoryDayGroup): string {
     ],
   ];
 
-  for (const project of day.projects) {
-    for (const task of project.tasks) {
-      rows.push([
-        formatDisplayDate(day.date),
-        project.name,
-        project.caseNo,
-        task.number,
-        "Completed",
-        Math.round(task.minutes * 100) / 100,
-        formatHoursFromMinutes(task.minutes),
-        task.durationLabel,
-        project.note ?? "",
-      ]);
+  for (const day of history.days) {
+    for (const project of day.projects) {
+      for (const task of project.tasks) {
+        rows.push([
+          formatDisplayDate(day.date),
+          project.name,
+          project.caseNo,
+          task.number,
+          "Completed",
+          Math.round(task.minutes * 100) / 100,
+          formatHoursFromMinutes(task.minutes),
+          task.durationLabel,
+          project.note ?? "",
+        ]);
+      }
     }
   }
 
   return toCsv(rows);
+}
+
+export function historyCsvFilename(fromIso: string, toIso: string): string {
+  const from = formatDisplayDate(fromIso).replaceAll("/", "-");
+  const to = formatDisplayDate(toIso).replaceAll("/", "-");
+  if (fromIso === toIso) {
+    return `activity-${from}.csv`;
+  }
+  return `activity-${from}_to_${to}.csv`;
 }

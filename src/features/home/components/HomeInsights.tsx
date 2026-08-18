@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
@@ -113,13 +113,22 @@ function MetricCard({
   );
 }
 
+function readInsights(
+  range: InsightRange,
+  custom: { from: string; to: string } | null,
+  today = getTodayIsoDate(),
+): HomeInsightsData {
+  const bounds = resolveInsightRange(range, today, custom);
+  return loadHomeInsights(bounds.from, bounds.to, today);
+}
+
 export function HomeInsights() {
-  const today = getTodayIsoDate();
+  const [today, setToday] = useState(() => getTodayIsoDate());
   const cutoff = getLocalRetentionCutoffIso(TIME_TRACKING_RETENTION_DAYS, today);
-  const [range, setRange] = useState<InsightRange>("7d");
+  const [range, setRange] = useState<InsightRange>("30d");
   const [custom, setCustom] = useState<{ from: string; to: string } | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [data, setData] = useState<HomeInsightsData | null>(null);
+  const [data, setData] = useState<HomeInsightsData>(() => readInsights("30d", null));
   const [refreshTick, setRefreshTick] = useState(0);
 
   const bounds = useMemo(
@@ -127,20 +136,27 @@ export function HomeInsights() {
     [range, today, custom],
   );
 
+  const reload = useCallback(() => {
+    const currentToday = getTodayIsoDate();
+    setToday(currentToday);
+    setData(readInsights(range, custom, currentToday));
+  }, [range, custom]);
+
   function refresh() {
-    setData(loadHomeInsights(bounds.from, bounds.to, today));
+    reload();
     setRefreshTick((tick) => tick + 1);
   }
 
   useEffect(() => {
-    setData(loadHomeInsights(bounds.from, bounds.to, today));
-  }, [bounds.from, bounds.to, today]);
+    reload();
+  }, [reload]);
 
-  const taskTotal = (data?.taskRatio.completed ?? 0) + (data?.taskRatio.open ?? 0);
+  useEffect(() => {
+    document.addEventListener("astro:page-load", reload);
+    return () => document.removeEventListener("astro:page-load", reload);
+  }, [reload]);
 
-  if (!data) {
-    return <Card className="h-72 animate-pulse bg-background/50" as="section" />;
-  }
+  const taskTotal = data.taskRatio.completed + data.taskRatio.open;
 
   return (
     <section className="space-y-4">
@@ -209,14 +225,14 @@ export function HomeInsights() {
           value={`${formatHoursFromMinutes(data.minutes)} hrs`}
           hint={`${formatMinutesShort(data.minutes)} across the range`}
           icon={<ChartIcon />}
-          tone="bg-sky-500/15 text-sky-500 dark:text-sky-300"
+          tone="bg-primary/15 text-primary"
         />
         <MetricCard
           label="Tasks completed"
           value={String(data.completedTasks)}
           hint={`${data.openTasks} still open`}
           icon={<CheckIcon />}
-          tone="bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
+          tone="bg-success/15 text-success"
         />
         <MetricCard
           label="Projects worked"

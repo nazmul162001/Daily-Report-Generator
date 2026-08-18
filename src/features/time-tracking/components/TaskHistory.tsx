@@ -10,9 +10,9 @@ import {
   formatDisplayDate,
   getLocalRetentionCutoffIso,
 } from "@/lib/date";
-import { formatDurationLabel, formatMinutesShort } from "@/lib/duration";
+import { formatHoursFromMinutes, formatMinutesShort } from "@/lib/duration";
 import { cn } from "@/lib/utils";
-import { historyDayToCsv, listCompletedHistory, type HistoryDayGroup, type HistoryProject } from "../history";
+import { historyCsvFilename, historyToCsv, listCompletedHistory, type HistoryProject } from "../history";
 import { TIME_TRACKING_RETENTION_DAYS } from "../types";
 import type { TimeTrackingStore } from "../types";
 
@@ -66,6 +66,101 @@ function DownloadIcon() {
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M5 19h14" />
     </svg>
+  );
+}
+
+function ChevronIcon({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={cn(
+        "h-4 w-4 transition-transform duration-200",
+        expanded ? "rotate-180" : "rotate-0",
+      )}
+      aria-hidden
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
+function HistoryProjectCard({
+  project,
+  onViewNote,
+}: {
+  project: HistoryProject;
+  onViewNote: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const taskCount = project.tasks.length;
+  const summary = [
+    project.caseNo ? `Case No ${project.caseNo}` : null,
+    `${taskCount} task${taskCount === 1 ? "" : "s"}`,
+    formatMinutesShort(project.totalMinutes),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  function toggleExpanded() {
+    setExpanded((value) => !value);
+  }
+
+  return (
+    <Card className="overflow-hidden p-0 sm:p-0">
+      <div className="flex items-start gap-1 p-3 sm:p-4">
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          aria-expanded={expanded}
+          aria-label={expanded ? `Hide tasks for ${project.name}` : `Show tasks for ${project.name}`}
+          className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl text-muted transition-colors hover:bg-background hover:text-text"
+        >
+          <ChevronIcon expanded={expanded} />
+        </button>
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          className="min-w-0 flex-1 cursor-pointer rounded-xl px-1 py-0.5 text-left transition-colors hover:bg-background/80"
+        >
+          <p className="truncate font-semibold text-text">{project.name}</p>
+          <p className="mt-0.5 text-sm text-muted">{summary}</p>
+        </button>
+        {project.note ? (
+          <button
+            type="button"
+            onClick={onViewNote}
+            className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-primary/40 bg-primary/15 text-primary shadow-sm ring-2 ring-primary/20 transition-colors hover:bg-primary/25"
+            aria-label={`View note for ${project.name}`}
+            title="View project note"
+          >
+            <InfoIcon />
+          </button>
+        ) : null}
+      </div>
+      {expanded ? (
+        <ul className="mx-3 mb-3 divide-y divide-border overflow-hidden rounded-xl border border-border sm:mx-4 sm:mb-4">
+          {project.tasks.map((task) => (
+            <li
+              key={task.id}
+              className="flex items-center justify-between gap-3 bg-background/60 px-3 py-2.5"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="rounded-lg bg-surface px-2 py-0.5 font-mono text-sm font-semibold text-text ring-1 ring-border">
+                  {task.number}
+                </span>
+                <Badge variant="success">Completed</Badge>
+              </span>
+              <span className="shrink-0 text-sm tabular-nums text-muted">
+                {formatMinutesShort(task.minutes)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </Card>
   );
 }
 
@@ -126,10 +221,13 @@ export const TaskHistory = memo(function TaskHistory({
       ? formatDisplayDate(range.from)
       : `${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
 
-  function downloadDayCsv(day: HistoryDayGroup) {
+  function downloadCsvExport() {
+    if (history.days.length === 0) {
+      return;
+    }
     downloadCsv(
-      `task-history-${formatDisplayDate(day.date)}.csv`,
-      historyDayToCsv(day),
+      historyCsvFilename(range.from, range.to),
+      historyToCsv(history),
     );
   }
 
@@ -147,7 +245,7 @@ export const TaskHistory = memo(function TaskHistory({
                 Custom Date to pick a range.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 sm:justify-end">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <span className="inline-flex min-h-8 items-center rounded-lg bg-background px-2.5 text-xs font-medium text-text ring-1 ring-border">
                 {history.projectCount} project
                 {history.projectCount === 1 ? "" : "s"}
@@ -158,6 +256,16 @@ export const TaskHistory = memo(function TaskHistory({
               <span className="inline-flex min-h-8 items-center rounded-lg bg-primary/10 px-2.5 text-xs font-medium text-primary ring-1 ring-primary/20">
                 {formatMinutesShort(history.totalMinutes)}
               </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={downloadCsvExport}
+                disabled={history.days.length === 0}
+                aria-label={`Download CSV for ${rangeLabel}`}
+              >
+                <DownloadIcon />
+                Download CSV
+              </Button>
             </div>
           </div>
 
@@ -207,85 +315,31 @@ export const TaskHistory = memo(function TaskHistory({
       {history.days.length === 0 ? (
         <EmptyState
           title="No completed projects"
-          description="Finish a task on Time Tracking and it will appear here. Try another date if you already have older work."
+          description="Finish a task and it will appear here. Try another date if you already have older work."
         />
       ) : (
         <div className="flex flex-col gap-5">
           {history.days.map((day) => (
             <section key={day.date} className="space-y-2">
-              <div className="sticky top-[4.5rem] z-10 -mx-1 flex items-center justify-between gap-3 rounded-xl bg-background/90 px-1 py-1 backdrop-blur-md sm:top-20">
-                <h3 className="text-sm font-semibold text-text">
-                  {formatDisplayDate(day.date)}
+              <div className="sticky top-[4.5rem] z-10 -mx-1 rounded-xl bg-background/90 px-1 py-1 backdrop-blur-md sm:top-20">
+                <h3 className="flex flex-wrap items-center gap-x-2 text-sm font-semibold text-text">
+                  <span>{formatDisplayDate(day.date)}</span>
+                  <span className="text-xs font-medium tabular-nums text-muted">
+                    {formatMinutesShort(day.totalMinutes)} ·{" "}
+                    {formatHoursFromMinutes(day.totalMinutes)} hrs
+                  </span>
                   {day.date === today ? (
-                    <span className="ml-2 text-xs font-medium text-primary">
-                      Today
-                    </span>
+                    <span className="text-xs font-medium text-primary">Today</span>
                   ) : null}
                 </h3>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => downloadDayCsv(day)}
-                  aria-label={`Download CSV for ${formatDisplayDate(day.date)}`}
-                >
-                  <DownloadIcon />
-                  Download CSV
-                </Button>
               </div>
               <div className="flex flex-col gap-2">
                 {day.projects.map((project) => (
-                  <Card
+                  <HistoryProjectCard
                     key={`${day.date}-${project.projectId}`}
-                    className="p-4 sm:p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-text">
-                          {project.name}
-                        </p>
-                        <p className="mt-0.5 text-sm text-muted">
-                          {project.caseNo ? `Case No ${project.caseNo} · ` : null}
-                          {formatMinutesShort(project.totalMinutes)}
-                          <span className="hidden sm:inline">
-                            {" "}
-                            · {formatDurationLabel(
-                              String(Math.round(project.totalMinutes)),
-                              false,
-                            )}
-                          </span>
-                        </p>
-                      </div>
-                      {project.note ? (
-                        <button
-                          type="button"
-                          onClick={() => setNote(project)}
-                          className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-primary/40 bg-primary/15 text-primary shadow-sm ring-2 ring-primary/20 transition-colors hover:bg-primary/25"
-                          aria-label={`View note for ${project.name}`}
-                          title="View project note"
-                        >
-                          <InfoIcon />
-                        </button>
-                      ) : null}
-                    </div>
-                    <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border">
-                      {project.tasks.map((task) => (
-                        <li
-                          key={task.id}
-                          className="flex items-center justify-between gap-3 bg-background/60 px-3 py-2.5"
-                        >
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span className="rounded-lg bg-surface px-2 py-0.5 font-mono text-sm font-semibold text-text ring-1 ring-border">
-                              {task.number}
-                            </span>
-                            <Badge variant="success">Completed</Badge>
-                          </span>
-                          <span className="shrink-0 text-sm tabular-nums text-muted">
-                            {formatMinutesShort(task.minutes)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
+                    project={project}
+                    onViewNote={() => setNote(project)}
+                  />
                 ))}
               </div>
             </section>

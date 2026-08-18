@@ -76,7 +76,7 @@ function TimeTrackingPageInner() {
       <div
         className="flex rounded-2xl border border-border bg-surface p-1 shadow-sm"
         role="tablist"
-        aria-label="Time tracking sections"
+        aria-label="Activity sections"
       >
         <button
           type="button"
@@ -92,7 +92,7 @@ function TimeTrackingPageInner() {
           )}
           onClick={() => setTab("tracking")}
         >
-          Time Tracking
+          Today&apos;s Summary
         </button>
         <button
           type="button"
@@ -108,7 +108,7 @@ function TimeTrackingPageInner() {
           )}
           onClick={() => setTab("history")}
         >
-          Task History
+          Activity History
         </button>
       </div>
 
@@ -147,7 +147,7 @@ function TimeTrackingPageInner() {
         ) : tracking.projects.length === 0 ? (
           <EmptyState
             title="No projects yet"
-            description="Create a project, add task numbers, and start a timer. Totals feed today's Detailed Report revision by default."
+            description="Create a project, add task numbers, and start a timer. Totals still fill Detailed Report Revision when you haven't logged revision work there."
             actionLabel="Add Project"
             onAction={() => setAddProjectOpen(true)}
           />
