@@ -21,16 +21,29 @@ interface WorkLogPanelProps {
   log: WorkLogController;
   onClose: () => void;
   columnDrag?: ReactNode;
+  columnResizeRight?: ReactNode;
 }
 
 const fieldClass =
   "h-8 min-w-0 rounded-lg border border-border bg-surface px-2.5 text-sm text-text placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
-export function WorkLogPanel({ kind, category, log, onClose, columnDrag }: WorkLogPanelProps) {
+export function WorkLogPanel({
+  kind,
+  category,
+  log,
+  onClose,
+  columnDrag,
+  columnResizeRight,
+}: WorkLogPanelProps) {
   const live = roundLiveMinutes(liveMinutesForKind(log.day, kind, log.now));
 
   return (
-    <aside className="work-log-panel flex h-fit flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--c-shadow)] max-xl:rounded-t-3xl xl:max-h-[calc(100vh-6rem)]">
+    <aside className="work-log-panel relative flex h-fit flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--c-shadow)] max-xl:rounded-t-3xl xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-visible">
+      {columnResizeRight ? (
+        <div className="absolute right-0 top-1/2 z-30 hidden translate-x-1/2 -translate-y-1/2 xl:block">
+          {columnResizeRight}
+        </div>
+      ) : null}
       <header className="flex items-center justify-between gap-3 border-b border-border px-3.5 py-3">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-text">
@@ -117,7 +130,7 @@ function ProjectGroup({
 
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-background/50">
-      <div className={cn("flex items-start gap-1 px-1.5 py-1.5", expanded && "border-b border-border")}>
+      <div className={cn("flex items-center gap-1 px-1.5 py-1.5", expanded && "border-b border-border")}>
         <IconBtn
           label={expanded ? "Collapse tasks" : "Expand tasks"}
           onClick={() => setExpanded((value) => !value)}
@@ -136,7 +149,7 @@ function ProjectGroup({
           ) : null}
         </button>
         {expanded ? (
-          <span className="mt-1 shrink-0 pr-1 text-[11px] tabular-nums text-muted">
+          <span className="shrink-0 pr-1 text-[11px] tabular-nums text-muted">
             {formatMinutesShort(totalMinutes)}
           </span>
         ) : null}

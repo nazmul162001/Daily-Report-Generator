@@ -439,11 +439,9 @@ html.theme-revealing body * {
 }
 
 .work-log-slot-desktop {
-  align-self: start;
   width: 0;
   opacity: 0;
   overflow: hidden;
-  max-height: calc(100vh - 6rem);
   pointer-events: none;
   transition:
     width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
@@ -451,14 +449,30 @@ html.theme-revealing body * {
 }
 
 .work-log-slot-desktop.is-open {
-  width: 26rem;
+  width: var(--log-col-width, 26rem);
   opacity: 1;
+  overflow: visible;
   pointer-events: auto;
 }
 
 .work-log-slot-desktop .work-log-panel {
-  width: 26rem;
+  width: var(--log-col-width, 26rem);
   animation: workPanelIn 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.report-columns {
+  transition: grid-template-columns 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.col-resizing,
+html.col-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+html.col-resizing .work-log-slot-desktop,
+html.col-resizing .report-columns {
+  transition: none !important;
 }
 
 .work-log-slot-mobile {
@@ -503,6 +517,7 @@ html.theme-revealing body * {
   .work-log-slot-desktop,
   .work-log-slot-mobile,
   .work-log-backdrop,
+  .report-columns,
   .work-log-slot-desktop .work-log-panel,
   .work-log-slot-mobile .work-log-panel {
     transition: none !important;

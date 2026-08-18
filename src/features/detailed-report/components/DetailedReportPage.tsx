@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   type DragEndEvent,
@@ -43,7 +43,9 @@ import {
   DEFAULT_COLUMN_ORDER,
   isReportColumnId,
   loadColumnOrder,
+  MIN_COLUMN_PX,
   saveColumnOrder,
+  type ColumnWidthMap,
   type ReportColumnId,
 } from "../columnOrder";
 import { ColumnDragHandle, ColumnDragPreview, SortableReportColumn } from "./SortableReportColumn";
@@ -63,7 +65,11 @@ function DetailedReportPageInner() {
   const [columnOrder, setColumnOrder] = useState<ReportColumnId[]>(
     DEFAULT_COLUMN_ORDER,
   );
+  const [columnWidths, setColumnWidths] = useState<ColumnWidthMap | null>(null);
   const [activeColumn, setActiveColumn] = useState<ReportColumnId | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const resizeSnapshot = useRef<ColumnWidthMap | null>(null);
   const columnDndId = useId();
   const [errors, setErrors] = useState<{
     recipients?: string;
@@ -87,6 +93,9 @@ function DetailedReportPageInner() {
     setPreferences({ lastReportType: "detailed-report" });
     setHydrated(true);
     setColumnOrder(loadColumnOrder());
+    return () => {
+      document.documentElement.classList.remove("col-resizing");
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -221,8 +230,77 @@ function DetailedReportPageInner() {
   );
 
   const xlColumns = columnOrder
-    .map((id) => columnTrack(id, slotOpen))
+    .map((id) => columnTrack(id, slotOpen, columnWidths))
     .join(" ");
+
+  const resizeNeighbors = useMemo(() => {
+    const visible = columnOrder.filter((id) => id !== "log" || slotOpen);
+    const next = new Map<ReportColumnId, ReportColumnId>();
+    for (let index = 0; index < visible.length - 1; index += 1) {
+      next.set(visible[index], visible[index + 1]);
+    }
+    return next;
+  }, [columnOrder, slotOpen]);
+
+  function measureColumn(id: ReportColumnId): number {
+    const node = gridRef.current?.querySelector(`[data-report-column="${id}"]`);
+    return node instanceof HTMLElement ? node.getBoundingClientRect().width : 0;
+  }
+
+  function handleResizeStart(leftId: ReportColumnId, rightId: ReportColumnId) {
+    const formPx = Math.max(measureColumn("form"), 1);
+    const previewPx = Math.max(measureColumn("preview"), 1);
+    const logMeasured = measureColumn("log");
+    const customizeLog =
+      leftId === "log" || rightId === "log" || columnWidths?.log != null;
+    const snapshot: ColumnWidthMap = {
+      form: formPx,
+      preview: previewPx,
+      log: customizeLog ? Math.max(logMeasured, 1) : null,
+    };
+    resizeSnapshot.current = snapshot;
+    setColumnWidths(snapshot);
+    setIsResizing(true);
+    document.documentElement.classList.add("col-resizing");
+  }
+
+  function handleResize(
+    leftId: ReportColumnId,
+    rightId: ReportColumnId,
+    deltaX: number,
+  ) {
+    const start = resizeSnapshot.current;
+    if (!start) {
+      return;
+    }
+    const startLeft = leftId === "log" ? (start.log ?? 1) : start[leftId];
+    const startRight = rightId === "log" ? (start.log ?? 1) : start[rightId];
+    const pair = startLeft + startRight;
+    const maxLeft = pair - MIN_COLUMN_PX[rightId];
+    const nextLeft = Math.min(
+      Math.max(startLeft + deltaX, MIN_COLUMN_PX[leftId]),
+      maxLeft,
+    );
+    const nextRight = pair - nextLeft;
+    const next: ColumnWidthMap = { ...start };
+    if (leftId === "log") {
+      next.log = nextLeft;
+    } else {
+      next[leftId] = nextLeft;
+    }
+    if (rightId === "log") {
+      next.log = nextRight;
+    } else {
+      next[rightId] = nextRight;
+    }
+    setColumnWidths(next);
+  }
+
+  function handleResizeEnd() {
+    setIsResizing(false);
+    document.documentElement.classList.remove("col-resizing");
+    resizeSnapshot.current = null;
+  }
 
   function handleColumnDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -240,7 +318,11 @@ function DetailedReportPageInner() {
     saveColumnOrder(next);
   }
 
-  function renderColumn(id: ReportColumnId, drag: Parameters<typeof ColumnDragHandle>[0]) {
+  function renderColumn(
+    id: ReportColumnId,
+    drag: Parameters<typeof ColumnDragHandle>[0],
+    extras: { resizeHandleRight: React.ReactNode | null },
+  ) {
     const handle = <ColumnDragHandle id={id} {...drag} />;
     if (id === "form") {
       return (
@@ -273,6 +355,7 @@ function DetailedReportPageInner() {
           log={workLog}
           onClose={() => setSelectedBreakdownId(null)}
           columnDrag={handle}
+          columnResizeRight={extras.resizeHandleRight}
         />
       ) : null;
     }
@@ -303,24 +386,40 @@ function DetailedReportPageInner() {
       >
         <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
           <div
+            ref={gridRef}
             className={cn(
-              "grid items-start gap-6 lg:grid-cols-2",
+              "report-columns grid items-start gap-6 lg:grid-cols-2",
               "xl:[grid-template-columns:var(--report-cols)]",
+              isResizing && "select-none",
             )}
-            style={{ ["--report-cols" as string]: xlColumns }}
+            style={{
+              ["--report-cols" as string]: xlColumns,
+              ["--log-col-width" as string]:
+                columnWidths?.log != null
+                  ? `${Math.round(columnWidths.log)}px`
+                  : "26rem",
+            }}
           >
             {columnOrder.map((id) => (
               <SortableReportColumn
                 key={id}
                 id={id}
                 disabled={id === "log" && !slotOpen}
+                resizeNeighbor={
+                  activeColumn ? null : (resizeNeighbors.get(id) ?? null)
+                }
+                onResizeStart={handleResizeStart}
+                onResize={handleResize}
+                onResizeEnd={handleResizeEnd}
                 className={cn(
-                  id === "log" && "work-log-slot-desktop hidden xl:block",
+                  id === "form" && "self-start",
+                  id === "log" && "work-log-slot-desktop hidden xl:block xl:self-stretch",
                   id === "log" && slotOpen && "is-open",
+                  id === "preview" && "xl:self-stretch",
                   id === "preview" && panelOpen && "lg:col-span-2 xl:col-span-1",
                 )}
               >
-                {(drag) => renderColumn(id, drag)}
+                {(drag, extras) => renderColumn(id, drag, extras)}
               </SortableReportColumn>
             ))}
           </div>

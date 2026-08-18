@@ -42,14 +42,42 @@ export function saveColumnOrder(order: ReportColumnId[]): void {
   setStorageItem(STORAGE_KEYS.detailedReportColumns, normalizeColumnOrder(order));
 }
 
-export function columnTrack(id: ReportColumnId, logOpen: boolean): string {
+export const LOG_COLUMN_WIDTH = "26rem";
+
+export const MIN_COLUMN_PX: Record<ReportColumnId, number> = {
+  form: 280,
+  log: 256,
+  preview: 280,
+};
+
+/** Session-only relative weights used as `fr` tracks. `log: null` keeps the default 26rem. */
+export type ColumnWidthMap = {
+  form: number;
+  preview: number;
+  log: number | null;
+};
+
+export function columnTrack(
+  id: ReportColumnId,
+  logOpen: boolean,
+  widths: ColumnWidthMap | null = null,
+): string {
   if (id === "log") {
-    return logOpen ? "26rem" : "0px";
+    if (!logOpen) {
+      return "0px";
+    }
+    if (widths?.log != null) {
+      return `${Math.round(widths.log)}px`;
+    }
+    return LOG_COLUMN_WIDTH;
   }
-  if (id === "form") {
-    return "minmax(0,1.05fr)";
+  if (!widths) {
+    if (id === "form") {
+      return "minmax(0,1.05fr)";
+    }
+    return "minmax(0,0.95fr)";
   }
-  return "minmax(0,0.95fr)";
+  return `minmax(18rem, ${widths[id]}fr)`;
 }
 
 export function columnLabel(id: ReportColumnId): string {
