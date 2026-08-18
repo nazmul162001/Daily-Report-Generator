@@ -125,10 +125,10 @@ function readInsights(
 export function HomeInsights() {
   const [today, setToday] = useState(() => getTodayIsoDate());
   const cutoff = getLocalRetentionCutoffIso(TIME_TRACKING_RETENTION_DAYS, today);
-  const [range, setRange] = useState<InsightRange>("7d");
+  const [range, setRange] = useState<InsightRange>("30d");
   const [custom, setCustom] = useState<{ from: string; to: string } | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [data, setData] = useState<HomeInsightsData>(() => readInsights("7d", null));
+  const [data, setData] = useState<HomeInsightsData>(() => readInsights("30d", null));
   const [refreshTick, setRefreshTick] = useState(0);
 
   const bounds = useMemo(
@@ -225,14 +225,14 @@ export function HomeInsights() {
           value={`${formatHoursFromMinutes(data.minutes)} hrs`}
           hint={`${formatMinutesShort(data.minutes)} across the range`}
           icon={<ChartIcon />}
-          tone="bg-sky-500/15 text-sky-500 dark:text-sky-300"
+          tone="bg-primary/15 text-primary"
         />
         <MetricCard
           label="Tasks completed"
           value={String(data.completedTasks)}
           hint={`${data.openTasks} still open`}
           icon={<CheckIcon />}
-          tone="bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
+          tone="bg-success/15 text-success"
         />
         <MetricCard
           label="Projects worked"

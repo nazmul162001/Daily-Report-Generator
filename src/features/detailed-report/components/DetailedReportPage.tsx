@@ -167,7 +167,6 @@ function DetailedReportPageInner() {
   const selectedItem = report.workBreakdown.find(
     (item) => item.id === selectedBreakdownId,
   );
-  const panelOpen = Boolean(selectedItem);
   const [slotItem, setSlotItem] = useState(selectedItem ?? null);
   const [slotOpen, setSlotOpen] = useState(false);
 
@@ -427,10 +426,10 @@ function DetailedReportPageInner() {
                 onResizeEnd={handleResizeEnd}
                 className={cn(
                   id === "form" && "self-start",
-                  id === "log" && "work-log-slot-desktop hidden xl:block xl:self-stretch",
+                  id === "log" && "work-log-slot-desktop hidden xl:block",
                   id === "log" && slotOpen && "is-open",
                   id === "preview" && "xl:self-stretch",
-                  id === "preview" && panelOpen && "lg:col-span-2 xl:col-span-1",
+                  id === "preview" && slotOpen && "lg:col-span-2 xl:col-span-1",
                 )}
               >
                 {(drag, extras) => renderColumn(id, drag, extras)}

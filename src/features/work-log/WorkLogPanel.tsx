@@ -38,7 +38,7 @@ export function WorkLogPanel({
   const live = roundLiveMinutes(liveMinutesForKind(log.day, kind, log.now));
 
   return (
-    <aside className="work-log-panel relative flex h-fit flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--c-shadow)] max-xl:rounded-t-3xl xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-visible">
+    <aside className="work-log-panel relative flex h-fit max-h-[inherit] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--c-shadow)] max-xl:rounded-t-3xl">
       {columnResizeRight ? (
         <div className="absolute right-0 top-1/2 z-30 hidden translate-x-1/2 -translate-y-1/2 xl:block">
           {columnResizeRight}
