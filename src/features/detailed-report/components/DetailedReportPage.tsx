@@ -19,8 +19,10 @@ import { ToastProvider, useToast } from "@/components/ui/Toast";
 import {
   createDefaultDetailedReport,
   normalizeDetailedReport,
+  resetUnlockedBreakdownMinutes,
+  startOfDayWorkBreakdown,
 } from "@/data/defaultTemplates";
-import { applyTrackingRevisionDefault } from "@/features/time-tracking/revision";
+import { isRevisionItem } from "@/features/time-tracking/revision";
 import { kindFromCategory } from "@/features/work-log/categories";
 import { applyLiveMinutes } from "@/features/work-log/totals";
 import { useWorkLog } from "@/features/work-log/useWorkLog";
@@ -33,7 +35,6 @@ import { useDraftAutoSave } from "@/hooks/useDraftAutoSave";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { copyToClipboard } from "@/lib/clipboard";
 import type { DetailedReportData } from "../types";
-import { parseMinutes } from "../duration";
 import {
   formatDetailedReport,
   formatDetailedReportHtml,
@@ -79,14 +80,29 @@ function DetailedReportPageInner() {
   }>({});
 
   useEffect(() => {
+    const today = getTodayIsoDate();
     const draft = getDraft<DetailedReportData>(STORAGE_KEYS.draftDetailedReport);
-    const base = draft
-      ? {
-          ...normalizeDetailedReport(draft),
-          date: getTodayIsoDate(),
-        }
+    const restored = draft
+      ? normalizeDetailedReport(draft)
       : createDefaultDetailedReport();
-    setReport(applyTrackingRevisionDefault(base));
+    const isNewDay = restored.date !== today;
+    const workBreakdown = (
+      isNewDay
+        ? startOfDayWorkBreakdown(restored.workBreakdown)
+        : resetUnlockedBreakdownMinutes(restored.workBreakdown)
+    ).map((item) =>
+      isRevisionItem(item)
+        ? { ...item, minutes: "0", isNA: false, minutesLocked: false }
+        : item,
+    );
+    setReport({
+      ...restored,
+      date: today,
+      workBreakdown,
+      revisionManuallyEdited: isNewDay
+        ? false
+        : restored.revisionManuallyEdited,
+    });
     if (draft) {
       showToast("Draft restored.", "info");
     }
@@ -105,17 +121,26 @@ function DetailedReportPageInner() {
     }
 
     function syncLive() {
+      const today = getTodayIsoDate();
       setReport((current) => {
-        const withRevision = applyTrackingRevisionDefault(current);
+        const rolled =
+          current.date === today
+            ? current
+            : {
+                ...current,
+                date: today,
+                revisionManuallyEdited: false,
+                workBreakdown: startOfDayWorkBreakdown(current.workBreakdown),
+              };
         const nextItems = applyLiveMinutes(
-          withRevision.workBreakdown,
+          rolled.workBreakdown,
           workLog.day,
           Date.now(),
         );
-        if (nextItems === withRevision.workBreakdown && withRevision === current) {
+        if (nextItems === rolled.workBreakdown && rolled === current) {
           return current;
         }
-        return { ...withRevision, workBreakdown: nextItems };
+        return { ...rolled, workBreakdown: nextItems };
       });
     }
 
@@ -174,24 +199,13 @@ function DetailedReportPageInner() {
     if (report.workBreakdown.every((item) => !item.category.trim())) {
       nextErrors.workBreakdown = "Add at least one work breakdown row.";
     }
-    const invalidMinutes = report.workBreakdown.some(
-      (item) =>
-        item.category.trim() &&
-        !item.isNA &&
-        parseMinutes(item.minutes) === null,
-    );
-    if (invalidMinutes) {
-      nextErrors.workBreakdown =
-        "Enter minutes or mark as N/A for each active category.";
-    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }, [report]);
 
   const resolveReportForOutput = useCallback((): DetailedReportData => {
-    const next = applyTrackingRevisionDefault(report);
-    const workBreakdown = applyLiveMinutes(next.workBreakdown, workLog.day, workLog.now);
-    const resolved = { ...next, workBreakdown };
+    const workBreakdown = applyLiveMinutes(report.workBreakdown, workLog.day, workLog.now);
+    const resolved = { ...report, workBreakdown };
     if (resolved !== report) {
       setReport(resolved);
     }

@@ -2,6 +2,7 @@ import {
   endOfLocalDayMs,
   getLocalRetentionCutoffIso,
   getTodayIsoDate,
+  isoDateFromLocalMs,
 } from "@/lib/date";
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import { createId } from "@/lib/utils";
@@ -187,6 +188,10 @@ function normalizeTimed(raw: unknown): TimedLogEntry | null {
     status,
     startedAt: asFiniteNumber(raw.startedAt),
     elapsedMs: Math.max(0, asFiniteNumber(raw.elapsedMs) ?? 0),
+    loggedAt:
+      asFiniteNumber(raw.loggedAt) ??
+      asFiniteNumber(raw.startedAt) ??
+      undefined,
   };
 }
 
@@ -221,6 +226,81 @@ function normalizeDay(raw: unknown): WorkLogDay {
     : [];
   const boardProjects = normalizeBoards(raw.boardProjects, timed, reviews);
   return { timed, reviews, boardProjects };
+}
+
+function entryLocalDate(entry: TimedLogEntry, fallbackDate: string): string {
+  const ms = entry.loggedAt ?? entry.startedAt;
+  if (ms == null) {
+    return fallbackDate;
+  }
+  return isoDateFromLocalMs(ms);
+}
+
+/** Move timed rows onto the local calendar day they were actually logged. */
+export function rebucketEntriesToLocalDays(store: WorkLogStore): WorkLogStore {
+  const timedByDate: Record<string, TimedLogEntry[]> = {};
+  const reviewsByDate: Record<string, ReviewLogEntry[]> = {};
+  const boardsByDate: Record<string, Partial<Record<WorkLogKind, string[]>>> = {};
+
+  function timedBucket(date: string): TimedLogEntry[] {
+    if (!timedByDate[date]) {
+      timedByDate[date] = [];
+    }
+    return timedByDate[date];
+  }
+
+  for (const [date, day] of Object.entries(store.days)) {
+    reviewsByDate[date] = [...(reviewsByDate[date] ?? []), ...day.reviews];
+    boardsByDate[date] = {
+      ...(boardsByDate[date] ?? {}),
+      ...day.boardProjects,
+    };
+    for (const entry of day.timed) {
+      timedBucket(entryLocalDate(entry, date)).push(entry);
+    }
+  }
+
+  const dates = new Set([
+    ...Object.keys(timedByDate),
+    ...Object.keys(reviewsByDate),
+    ...Object.keys(boardsByDate),
+  ]);
+  const days: Record<string, WorkLogDay> = {};
+  for (const date of dates) {
+    const timed = timedByDate[date] ?? [];
+    const reviews = reviewsByDate[date] ?? [];
+    const boards = { ...(boardsByDate[date] ?? {}) };
+    for (const kind of Object.keys(boards) as WorkLogKind[]) {
+      const names = boards[kind] ?? [];
+      boards[kind] = names.filter((name) => {
+        const key = name.trim().toLowerCase();
+        const onThisDay = timed.some(
+          (entry) =>
+            entry.kind === kind &&
+            entry.label.trim().toLowerCase() === key,
+        );
+        if (onThisDay) {
+          return true;
+        }
+        const onOtherDay = Object.entries(timedByDate).some(
+          ([otherDate, entries]) =>
+            otherDate !== date &&
+            entries.some(
+              (entry) =>
+                entry.kind === kind &&
+                entry.label.trim().toLowerCase() === key,
+            ),
+        );
+        return !onOtherDay;
+      });
+    }
+    days[date] = {
+      timed,
+      reviews,
+      boardProjects: normalizeBoards(boards, timed, reviews),
+    };
+  }
+  return { ...store, days };
 }
 
 function isIsoDateKey(key: string): boolean {
@@ -378,7 +458,9 @@ export function prepareStore(
   today = getTodayIsoDate(),
   now = Date.now(),
 ): WorkLogStore {
-  const normalized = pruneOldDays(normalizeStore(raw), today);
+  const normalized = rebucketEntriesToLocalDays(
+    pruneOldDays(normalizeStore(raw), today),
+  );
   const aged = completeStaleRunning(normalized, today, now);
   const running = findRunningEntry(aged);
   return pauseOthers(aged, running?.entry.id ?? null, now);

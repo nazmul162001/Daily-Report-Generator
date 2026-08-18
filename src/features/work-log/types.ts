@@ -24,6 +24,8 @@ export interface TimedLogEntry {
   status: TimedStatus;
   startedAt: number | null;
   elapsedMs: number;
+  /** Local-time timestamp when the row was created. */
+  loggedAt?: number;
 }
 
 export interface ReviewLogEntry {

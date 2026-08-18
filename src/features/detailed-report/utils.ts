@@ -26,6 +26,18 @@ function filledGoals(items: BulletItem[]): string[] {
   return items.map((item) => item.text.trim()).filter(Boolean);
 }
 
+function isBreakdownNA(
+  item: DetailedReportData["workBreakdown"][number],
+  logDay: WorkLogDay,
+  now: number,
+): boolean {
+  if (item.isNA) {
+    return true;
+  }
+  const minutes = parseMinutes(displayMinutesForItem(item, logDay, now));
+  return minutes === null || minutes === 0;
+}
+
 /**
  * Plain-text preview / text/plain clipboard.
  * Goal sections omitted when empty.
@@ -51,7 +63,7 @@ export function formatDetailedReport(
     lines.push(
       `• ${category}: ${formatDurationLabel(
         displayMinutesForItem(item, logDay, now),
-        item.isNA,
+        isBreakdownNA(item, logDay, now),
       )}`,
     );
   }
@@ -107,7 +119,7 @@ export function formatDetailedReportHtml(
     }
     const duration = formatDurationLabel(
       displayMinutesForItem(item, logDay, now),
-      item.isNA,
+      isBreakdownNA(item, logDay, now),
     );
     parts.push(
       `<li><strong>${escapeHtml(category)}:</strong> ${escapeHtml(duration)}</li>`,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
@@ -113,13 +113,22 @@ function MetricCard({
   );
 }
 
+function readInsights(
+  range: InsightRange,
+  custom: { from: string; to: string } | null,
+  today = getTodayIsoDate(),
+): HomeInsightsData {
+  const bounds = resolveInsightRange(range, today, custom);
+  return loadHomeInsights(bounds.from, bounds.to, today);
+}
+
 export function HomeInsights() {
-  const today = getTodayIsoDate();
+  const [today, setToday] = useState(() => getTodayIsoDate());
   const cutoff = getLocalRetentionCutoffIso(TIME_TRACKING_RETENTION_DAYS, today);
   const [range, setRange] = useState<InsightRange>("7d");
   const [custom, setCustom] = useState<{ from: string; to: string } | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [data, setData] = useState<HomeInsightsData | null>(null);
+  const [data, setData] = useState<HomeInsightsData>(() => readInsights("7d", null));
   const [refreshTick, setRefreshTick] = useState(0);
 
   const bounds = useMemo(
@@ -127,20 +136,27 @@ export function HomeInsights() {
     [range, today, custom],
   );
 
+  const reload = useCallback(() => {
+    const currentToday = getTodayIsoDate();
+    setToday(currentToday);
+    setData(readInsights(range, custom, currentToday));
+  }, [range, custom]);
+
   function refresh() {
-    setData(loadHomeInsights(bounds.from, bounds.to, today));
+    reload();
     setRefreshTick((tick) => tick + 1);
   }
 
   useEffect(() => {
-    setData(loadHomeInsights(bounds.from, bounds.to, today));
-  }, [bounds.from, bounds.to, today]);
+    reload();
+  }, [reload]);
 
-  const taskTotal = (data?.taskRatio.completed ?? 0) + (data?.taskRatio.open ?? 0);
+  useEffect(() => {
+    document.addEventListener("astro:page-load", reload);
+    return () => document.removeEventListener("astro:page-load", reload);
+  }, [reload]);
 
-  if (!data) {
-    return <Card className="h-72 animate-pulse bg-background/50" as="section" />;
-  }
+  const taskTotal = data.taskRatio.completed + data.taskRatio.open;
 
   return (
     <section className="space-y-4">

@@ -48,10 +48,11 @@ function WorkBreakdownRow({
   const nameRef = useRef<HTMLInputElement>(null);
   const hasLive = liveMinutes > 0;
   const locked = Boolean(item.minutesLocked);
-  const displayMinutes = item.isNA
-    ? ""
-    : locked || !hasLive
-      ? item.minutes
+  const displayMinutes =
+    locked || !hasLive
+      ? locked
+        ? item.minutes
+        : item.minutes || "0"
       : minutesToInput(liveMinutes);
 
   useEffect(() => {
@@ -90,7 +91,7 @@ function WorkBreakdownRow({
         selected ? "border-primary/50 ring-2 ring-primary/20 sm:ring-0" : "border-border",
       )}
     >
-      <div className="flex flex-col gap-2.5 sm:grid sm:grid-cols-[1fr_minmax(5.75rem,7rem)_auto_auto] sm:items-center sm:gap-2">
+      <div className="flex flex-col gap-2.5 sm:grid sm:grid-cols-[1fr_minmax(5.75rem,7rem)_auto] sm:items-center sm:gap-2">
         {item.category.trim() || editing ? (
           <div
             role="button"
@@ -162,7 +163,7 @@ function WorkBreakdownRow({
           />
         )}
 
-        <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 sm:contents">
+        <div className="grid grid-cols-[1fr_auto] items-center gap-2 sm:contents">
           <Input
             id={`wb-minutes-${item.id}`}
             inputMode="numeric"
@@ -171,22 +172,11 @@ function WorkBreakdownRow({
               const raw = event.target.value.replace(/[^\d.]/g, "");
               onUpdate({ minutes: raw, isNA: false, minutesLocked: true });
             }}
-            placeholder="Custom min"
-            disabled={item.isNA}
-            aria-label={`Custom minutes ${index + 1}`}
+            placeholder="0"
+            aria-label={`Minutes ${index + 1}`}
             title="Type custom minutes. Live time fills this unless you edit it."
             className="min-h-11"
           />
-
-          <label className="flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 text-sm text-text">
-            <input
-              type="checkbox"
-              checked={item.isNA}
-              onChange={(event) => onUpdate({ isNA: event.target.checked })}
-              className="h-4 w-4 cursor-pointer rounded border-border text-primary focus:ring-primary"
-            />
-            N/A
-          </label>
 
           <button
             type="button"
@@ -203,7 +193,7 @@ function WorkBreakdownRow({
           </button>
         </div>
       </div>
-      {locked && hasLive && !item.isNA ? (
+      {locked && hasLive ? (
         <button
           type="button"
           onClick={onUseLive}
@@ -235,7 +225,7 @@ export function WorkBreakdown({
       {
         id: createId("wb"),
         category: "",
-        minutes: "",
+        minutes: "0",
         isNA: false,
       },
     ]);

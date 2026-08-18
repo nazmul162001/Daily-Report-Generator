@@ -1,5 +1,4 @@
 import { durationMsToMinutes } from "@/features/time-tracking/timer";
-import { getTodayTrackedMinutes } from "@/features/time-tracking/storage";
 import type { WorkBreakdownItem } from "@/types/common";
 import { kindFromCategory } from "./categories";
 import { getTimedDurationMs } from "./timer";
@@ -23,20 +22,12 @@ export function liveMinutesForKind(
   day: WorkLogDay,
   kind: WorkLogKind,
   now = Date.now(),
-  options?: { includeTrackingFallback?: boolean },
+  _options?: { includeTrackingFallback?: boolean },
 ): number {
   if (kind === "review") {
     return reviewMinutes(day);
   }
-  const logged = timedMinutesForKind(day, kind, now);
-  if (
-    kind === "revision" &&
-    logged <= 0 &&
-    options?.includeTrackingFallback !== false
-  ) {
-    return getTodayTrackedMinutes({ includeRunning: true, now });
-  }
-  return logged;
+  return timedMinutesForKind(day, kind, now);
 }
 
 export function roundLiveMinutes(minutes: number): number {

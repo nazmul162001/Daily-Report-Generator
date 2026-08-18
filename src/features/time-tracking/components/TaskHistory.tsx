@@ -12,7 +12,7 @@ import {
 } from "@/lib/date";
 import { formatDurationLabel, formatMinutesShort } from "@/lib/duration";
 import { cn } from "@/lib/utils";
-import { historyDayToCsv, listCompletedHistory, type HistoryDayGroup, type HistoryProject } from "../history";
+import { historyCsvFilename, historyToCsv, listCompletedHistory, type HistoryProject } from "../history";
 import { TIME_TRACKING_RETENTION_DAYS } from "../types";
 import type { TimeTrackingStore } from "../types";
 
@@ -126,10 +126,13 @@ export const TaskHistory = memo(function TaskHistory({
       ? formatDisplayDate(range.from)
       : `${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
 
-  function downloadDayCsv(day: HistoryDayGroup) {
+  function downloadCsvExport() {
+    if (history.days.length === 0) {
+      return;
+    }
     downloadCsv(
-      `task-history-${formatDisplayDate(day.date)}.csv`,
-      historyDayToCsv(day),
+      historyCsvFilename(range.from, range.to),
+      historyToCsv(history),
     );
   }
 
@@ -147,7 +150,7 @@ export const TaskHistory = memo(function TaskHistory({
                 Custom Date to pick a range.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 sm:justify-end">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <span className="inline-flex min-h-8 items-center rounded-lg bg-background px-2.5 text-xs font-medium text-text ring-1 ring-border">
                 {history.projectCount} project
                 {history.projectCount === 1 ? "" : "s"}
@@ -158,6 +161,16 @@ export const TaskHistory = memo(function TaskHistory({
               <span className="inline-flex min-h-8 items-center rounded-lg bg-primary/10 px-2.5 text-xs font-medium text-primary ring-1 ring-primary/20">
                 {formatMinutesShort(history.totalMinutes)}
               </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={downloadCsvExport}
+                disabled={history.days.length === 0}
+                aria-label={`Download CSV for ${rangeLabel}`}
+              >
+                <DownloadIcon />
+                Download CSV
+              </Button>
             </div>
           </div>
 
@@ -213,7 +226,7 @@ export const TaskHistory = memo(function TaskHistory({
         <div className="flex flex-col gap-5">
           {history.days.map((day) => (
             <section key={day.date} className="space-y-2">
-              <div className="sticky top-[4.5rem] z-10 -mx-1 flex items-center justify-between gap-3 rounded-xl bg-background/90 px-1 py-1 backdrop-blur-md sm:top-20">
+              <div className="sticky top-[4.5rem] z-10 -mx-1 flex items-center gap-3 rounded-xl bg-background/90 px-1 py-1 backdrop-blur-md sm:top-20">
                 <h3 className="text-sm font-semibold text-text">
                   {formatDisplayDate(day.date)}
                   {day.date === today ? (
@@ -222,15 +235,6 @@ export const TaskHistory = memo(function TaskHistory({
                     </span>
                   ) : null}
                 </h3>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => downloadDayCsv(day)}
-                  aria-label={`Download CSV for ${formatDisplayDate(day.date)}`}
-                >
-                  <DownloadIcon />
-                  Download CSV
-                </Button>
               </div>
               <div className="flex flex-col gap-2">
                 {day.projects.map((project) => (

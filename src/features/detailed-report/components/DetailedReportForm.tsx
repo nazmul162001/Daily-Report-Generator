@@ -39,7 +39,7 @@ export function DetailedReportForm({
       <Card>
         <CardHeader
           title="Detailed CMS Report"
-          description="Compose work breakdown and goals for stakeholders."
+          description="Compose work breakdown and goals"
           action={
             columnDrag ? (
               <div className="hidden shrink-0 xl:block">{columnDrag}</div>

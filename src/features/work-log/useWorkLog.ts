@@ -4,6 +4,7 @@ import { createId } from "@/lib/utils";
 import {
   addBoardProject,
   completeTimedEntry,
+  emptyDay,
   emptyStore,
   findRunningEntry,
   getWorkLogDay,
@@ -17,7 +18,7 @@ import {
   updateTodayLog,
 } from "./storage";
 import { startFreshEntry, setElapsedMinutes } from "./timer";
-import type { TimedKind, WorkLogKind, WorkLogStore } from "./types";
+import type { TimedKind, WorkLogDay, WorkLogKind, WorkLogStore } from "./types";
 
 function persist(store: WorkLogStore): WorkLogStore {
   return saveWorkLogStore(store);
@@ -27,7 +28,7 @@ export function useWorkLog() {
   const [store, setStore] = useState<WorkLogStore>(emptyStore);
   const [hydrated, setHydrated] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const [today, setToday] = useState(() => getTodayIsoDate());
+  const [today, setToday] = useState("");
   const storeRef = useRef(store);
   storeRef.current = store;
   const hydratedRef = useRef(false);
@@ -42,6 +43,15 @@ export function useWorkLog() {
     [],
   );
 
+  const commitToday = useCallback(
+    (updater: (day: WorkLogDay) => WorkLogDay) => {
+      const date = getTodayIsoDate();
+      setToday(date);
+      commit((current) => updateTodayLog(current, updater, date));
+    },
+    [commit],
+  );
+
   useEffect(() => {
     const loaded = persist(loadWorkLogStore());
     storeRef.current = loaded;
@@ -52,37 +62,41 @@ export function useWorkLog() {
     setHydrated(true);
   }, []);
 
-  const day = useMemo(() => getWorkLogDay(store, today), [store, today]);
+  const day = useMemo(
+    () => (today ? getWorkLogDay(store, today) : emptyDay()),
+    [store, today],
+  );
   const running = useMemo(() => findRunningEntry(store), [store]);
 
   useEffect(() => {
-    if (!running) {
+    if (!hydrated) {
       return;
     }
-    const tick = () => {
+    const syncDate = () => {
       const currentToday = getTodayIsoDate();
-      if (currentToday !== today) {
-        setToday(currentToday);
-        commit((current) => current);
-        return;
+      setToday((previous) =>
+        previous === currentToday ? previous : currentToday,
+      );
+      if (running) {
+        setNow(Date.now());
       }
-      setNow(Date.now());
     };
-    tick();
-    const interval = window.setInterval(tick, 250);
+    syncDate();
+    const interval = window.setInterval(syncDate, running ? 250 : 30_000);
     function onVisible() {
       if (document.visibilityState === "visible") {
-        tick();
+        syncDate();
+        setNow(Date.now());
       }
     }
     document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", tick);
+    window.addEventListener("focus", onVisible);
     return () => {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", tick);
+      window.removeEventListener("focus", onVisible);
     };
-  }, [running, today, commit]);
+  }, [hydrated, running]);
 
   useEffect(() => {
     function flush() {
@@ -105,40 +119,36 @@ export function useWorkLog() {
     if (!trimmed) {
       return;
     }
-    commit((current) =>
-      updateTodayLog(current, (log) => addBoardProject(log, kind, trimmed)),
-    );
-  }, [commit]);
+    commitToday((log) => addBoardProject(log, kind, trimmed));
+  }, [commitToday]);
 
   const removeProject = useCallback((name: string, kind: WorkLogKind) => {
     const key = name.trim().toLowerCase();
     if (!key) {
       return;
     }
-    commit((current) =>
-      updateTodayLog(current, (log) => {
-        const withoutBoard = removeBoardProject(log, kind, name);
-        if (kind === "review") {
-          return {
-            ...withoutBoard,
-            reviews: withoutBoard.reviews.filter(
-              (item) => item.projectName.trim().toLowerCase() !== key,
-            ),
-          };
-        }
+    commitToday((log) => {
+      const withoutBoard = removeBoardProject(log, kind, name);
+      if (kind === "review") {
         return {
           ...withoutBoard,
-          timed: withoutBoard.timed.filter(
-            (entry) =>
-              !(
-                entry.kind === kind &&
-                entry.label.trim().toLowerCase() === key
-              ),
+          reviews: withoutBoard.reviews.filter(
+            (item) => item.projectName.trim().toLowerCase() !== key,
           ),
         };
-      }),
-    );
-  }, [commit]);
+      }
+      return {
+        ...withoutBoard,
+        timed: withoutBoard.timed.filter(
+          (entry) =>
+            !(
+              entry.kind === kind &&
+              entry.label.trim().toLowerCase() === key
+            ),
+        ),
+      };
+    });
+  }, [commitToday]);
 
   const addTimed = useCallback(
     (
@@ -155,6 +165,8 @@ export function useWorkLog() {
       const minutes = Math.max(0, options?.minutes ?? 0);
       const startNow = Boolean(options?.start);
       const startedAt = Date.now();
+      const date = getTodayIsoDate();
+      setToday(date);
       commit((current) => {
         const paused = startNow ? pauseOthers(current, null, startedAt) : current;
         return updateTodayLog(paused, (log) => {
@@ -175,8 +187,9 @@ export function useWorkLog() {
             label: trimmed,
             taskNo: task,
             status: "idle" as const,
-            startedAt: null,
+            startedAt: null as number | null,
             elapsedMs: 0,
+            loggedAt: startedAt,
           };
           if (minutes > 0) {
             entry = setElapsedMinutes(entry, minutes);
@@ -190,7 +203,7 @@ export function useWorkLog() {
               : log),
             timed: [...log.timed, entry],
           };
-        });
+        }, date);
       });
     },
     [commit],
@@ -228,8 +241,7 @@ export function useWorkLog() {
     if (!name || !Number.isFinite(minutes) || minutes < 0) {
       return;
     }
-    commit((current) =>
-      updateTodayLog(current, (log) => {
+    commitToday((log) => {
         const existing = log.reviews.find(
           (item) => item.projectName.toLowerCase() === name.toLowerCase(),
         );
@@ -250,29 +262,24 @@ export function useWorkLog() {
             { id: createId("rev"), projectName: name, minutes },
           ],
         };
-      }),
-    );
-  }, [commit]);
+      });
+  }, [commitToday]);
 
   const updateReview = useCallback((entryId: string, minutes: number) => {
-    commit((current) =>
-      updateTodayLog(current, (log) => ({
+    commitToday((log) => ({
         ...log,
         reviews: log.reviews.map((item) =>
           item.id === entryId ? { ...item, minutes: Math.max(0, minutes) } : item,
         ),
-      })),
-    );
-  }, [commit]);
+      }));
+  }, [commitToday]);
 
   const removeReview = useCallback((entryId: string) => {
-    commit((current) =>
-      updateTodayLog(current, (log) => ({
+    commitToday((log) => ({
         ...log,
         reviews: log.reviews.filter((item) => item.id !== entryId),
-      })),
-    );
-  }, [commit]);
+      }));
+  }, [commitToday]);
 
   return {
     hydrated,
