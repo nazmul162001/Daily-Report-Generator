@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ interface ReportPreviewProps {
   /** Optional HTML for rich paste (Slack compositor). */
   htmlContent?: string;
   draftStatus?: "idle" | "saving" | "saved" | "error";
+  columnDrag?: ReactNode;
 }
 
 function CopyIcon() {
@@ -34,6 +36,7 @@ export function ReportPreview({
   content,
   htmlContent,
   draftStatus = "idle",
+  columnDrag,
 }: ReportPreviewProps) {
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -77,7 +80,8 @@ export function ReportPreview({
             Live preview · {charCount} characters
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted">
+        <div className="flex items-center gap-1.5">
+          {columnDrag ? <div className="hidden shrink-0 xl:block">{columnDrag}</div> : null}
           {draftStatus === "saving" ? (
             <span className="rounded-full bg-background px-2 py-1">Saving…</span>
           ) : null}

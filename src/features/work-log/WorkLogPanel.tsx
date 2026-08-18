@@ -20,16 +20,17 @@ interface WorkLogPanelProps {
   category: string;
   log: WorkLogController;
   onClose: () => void;
+  columnDrag?: ReactNode;
 }
 
 const fieldClass =
   "h-8 min-w-0 rounded-lg border border-border bg-surface px-2.5 text-sm text-text placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
-export function WorkLogPanel({ kind, category, log, onClose }: WorkLogPanelProps) {
+export function WorkLogPanel({ kind, category, log, onClose, columnDrag }: WorkLogPanelProps) {
   const live = roundLiveMinutes(liveMinutesForKind(log.day, kind, log.now));
 
   return (
-    <aside className="work-log-panel flex h-fit flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--c-shadow)] max-xl:rounded-t-3xl xl:sticky xl:top-[4.75rem] xl:max-h-[calc(100vh-6rem)]">
+    <aside className="work-log-panel flex h-fit flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--c-shadow)] max-xl:rounded-t-3xl xl:max-h-[calc(100vh-6rem)]">
       <header className="flex items-center justify-between gap-3 border-b border-border px-3.5 py-3">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-text">
@@ -39,9 +40,12 @@ export function WorkLogPanel({ kind, category, log, onClose }: WorkLogPanelProps
             {formatMinutesShort(live)}
           </p>
         </div>
-        <IconBtn label="Close" onClick={onClose} tone="muted">
-          <CloseIcon />
-        </IconBtn>
+        <div className="flex shrink-0 items-center gap-0.5">
+          {columnDrag ? <div className="hidden xl:block">{columnDrag}</div> : null}
+          <IconBtn label="Close" onClick={onClose} tone="muted">
+            <CloseIcon />
+          </IconBtn>
+        </div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-3">

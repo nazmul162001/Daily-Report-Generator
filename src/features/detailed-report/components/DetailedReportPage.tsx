@@ -1,4 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import {
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import {
   createDefaultDetailedReport,
@@ -22,6 +38,15 @@ import {
   formatDetailedReport,
   formatDetailedReportHtml,
 } from "../utils";
+import {
+  columnTrack,
+  DEFAULT_COLUMN_ORDER,
+  isReportColumnId,
+  loadColumnOrder,
+  saveColumnOrder,
+  type ReportColumnId,
+} from "../columnOrder";
+import { ColumnDragHandle, ColumnDragPreview, SortableReportColumn } from "./SortableReportColumn";
 import { DetailedReportForm } from "./DetailedReportForm";
 import { DetailedReportPreview } from "./DetailedReportPreview";
 
@@ -35,6 +60,11 @@ function DetailedReportPageInner() {
   const [selectedBreakdownId, setSelectedBreakdownId] = useState<string | null>(
     null,
   );
+  const [columnOrder, setColumnOrder] = useState<ReportColumnId[]>(
+    DEFAULT_COLUMN_ORDER,
+  );
+  const [activeColumn, setActiveColumn] = useState<ReportColumnId | null>(null);
+  const columnDndId = useId();
   const [errors, setErrors] = useState<{
     recipients?: string;
     workBreakdown?: string;
@@ -56,6 +86,7 @@ function DetailedReportPageInner() {
     }
     setPreferences({ lastReportType: "detailed-report" });
     setHydrated(true);
+    setColumnOrder(loadColumnOrder());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -103,6 +134,19 @@ function DetailedReportPageInner() {
     (item) => item.id === selectedBreakdownId,
   );
   const panelOpen = Boolean(selectedItem);
+  const [slotItem, setSlotItem] = useState(selectedItem ?? null);
+  const [slotOpen, setSlotOpen] = useState(false);
+
+  useEffect(() => {
+    if (selectedItem) {
+      setSlotItem(selectedItem);
+      const frame = window.requestAnimationFrame(() => setSlotOpen(true));
+      return () => window.cancelAnimationFrame(frame);
+    }
+    setSlotOpen(false);
+    const timer = window.setTimeout(() => setSlotItem(null), 500);
+    return () => window.clearTimeout(timer);
+  }, [selectedItem]);
 
   const generated = useMemo(
     () => formatDetailedReport(report, workLog.day, workLog.now),
@@ -167,58 +211,158 @@ function DetailedReportPageInner() {
     enabled: hydrated,
   });
 
-  return (
-    <div
-      className={cn(
-        "grid gap-6",
-        panelOpen
-          ? "xl:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)_minmax(0,0.95fr)] lg:grid-cols-2"
-          : "lg:grid-cols-2",
-      )}
-    >
-      <DetailedReportForm
-        report={report}
-        errors={errors}
-        selectedBreakdownId={selectedBreakdownId}
-        logDay={workLog.day}
-        now={workLog.now}
-        onSelectBreakdown={(id) => {
-          if (!id) {
-            setSelectedBreakdownId(null);
-            return;
-          }
-          setSelectedBreakdownId((current) => (current === id ? null : id));
-        }}
-        onChange={setReport}
-      />
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
-      {selectedItem ? (
+  const xlColumns = columnOrder
+    .map((id) => columnTrack(id, slotOpen))
+    .join(" ");
+
+  function handleColumnDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setActiveColumn(null);
+    if (!over || active.id === over.id) {
+      return;
+    }
+    const oldIndex = columnOrder.findIndex((id) => id === active.id);
+    const newIndex = columnOrder.findIndex((id) => id === over.id);
+    if (oldIndex < 0 || newIndex < 0) {
+      return;
+    }
+    const next = arrayMove(columnOrder, oldIndex, newIndex);
+    setColumnOrder(next);
+    saveColumnOrder(next);
+  }
+
+  function renderColumn(id: ReportColumnId, drag: Parameters<typeof ColumnDragHandle>[0]) {
+    const handle = <ColumnDragHandle id={id} {...drag} />;
+    if (id === "form") {
+      return (
+        <DetailedReportForm
+          report={report}
+          errors={errors}
+          selectedBreakdownId={selectedBreakdownId}
+          logDay={workLog.day}
+          now={workLog.now}
+          onSelectBreakdown={(breakdownId) => {
+            if (!breakdownId) {
+              setSelectedBreakdownId(null);
+              return;
+            }
+            setSelectedBreakdownId((current) =>
+              current === breakdownId ? null : breakdownId,
+            );
+          }}
+          onChange={setReport}
+          columnDrag={handle}
+        />
+      );
+    }
+    if (id === "log") {
+      return slotItem ? (
+        <WorkLogPanel
+          key={slotItem.id}
+          kind={kindFromCategory(slotItem.category)}
+          category={slotItem.category}
+          log={workLog}
+          onClose={() => setSelectedBreakdownId(null)}
+          columnDrag={handle}
+        />
+      ) : null;
+    }
+    return (
+      <DetailedReportPreview
+        content={generated}
+        htmlContent={generatedHtml}
+        draftStatus={draftStatus}
+        columnDrag={handle}
+      />
+    );
+  }
+
+  return (
+    <>
+      <DndContext
+        id={columnDndId}
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={(event) => {
+          const id = String(event.active.id);
+          if (isReportColumnId(id)) {
+            setActiveColumn(id);
+          }
+        }}
+        onDragCancel={() => setActiveColumn(null)}
+        onDragEnd={handleColumnDragEnd}
+      >
+        <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
+          <div
+            className={cn(
+              "grid items-start gap-6 lg:grid-cols-2",
+              "xl:[grid-template-columns:var(--report-cols)]",
+            )}
+            style={{ ["--report-cols" as string]: xlColumns }}
+          >
+            {columnOrder.map((id) => (
+              <SortableReportColumn
+                key={id}
+                id={id}
+                disabled={id === "log" && !slotOpen}
+                className={cn(
+                  id === "log" && "work-log-slot-desktop hidden xl:block",
+                  id === "log" && slotOpen && "is-open",
+                  id === "preview" && panelOpen && "lg:col-span-2 xl:col-span-1",
+                )}
+              >
+                {(drag) => renderColumn(id, drag)}
+              </SortableReportColumn>
+            ))}
+          </div>
+        </SortableContext>
+        <DragOverlay
+          dropAnimation={{
+            duration: 200,
+            easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+          }}
+        >
+          {activeColumn ? <ColumnDragPreview id={activeColumn} /> : null}
+        </DragOverlay>
+      </DndContext>
+
+      {slotItem ? (
         <>
           <button
             type="button"
-            className="fixed inset-0 z-30 bg-black/40 xl:hidden"
+            className={cn(
+              "work-log-backdrop xl:hidden",
+              slotOpen && "is-open",
+            )}
             aria-label="Close log"
             onClick={() => setSelectedBreakdownId(null)}
           />
-          <div className="max-xl:fixed max-xl:inset-x-0 max-xl:bottom-0 max-xl:z-40 max-xl:p-3 xl:contents">
+          <div
+            className={cn(
+              "work-log-slot-mobile xl:hidden",
+              slotOpen && "is-open",
+            )}
+          >
             <WorkLogPanel
-              kind={kindFromCategory(selectedItem.category)}
-              category={selectedItem.category}
+              key={`mobile-${slotItem.id}`}
+              kind={kindFromCategory(slotItem.category)}
+              category={slotItem.category}
               log={workLog}
               onClose={() => setSelectedBreakdownId(null)}
             />
           </div>
         </>
       ) : null}
-
-      <div className={cn(panelOpen && "lg:col-span-2 xl:col-span-1")}>
-        <DetailedReportPreview
-          content={generated}
-          htmlContent={generatedHtml}
-          draftStatus={draftStatus}
-        />
-      </div>
-    </div>
+    </>
   );
 }
 

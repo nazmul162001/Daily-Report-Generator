@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { didRevisionFieldsChange } from "@/features/time-tracking/revision";
 import type { WorkLogDay } from "@/features/work-log/types";
@@ -20,6 +21,7 @@ interface DetailedReportFormProps {
   now: number;
   onSelectBreakdown: (id: string) => void;
   onChange: (report: DetailedReportData) => void;
+  columnDrag?: ReactNode;
 }
 
 export function DetailedReportForm({
@@ -30,6 +32,7 @@ export function DetailedReportForm({
   now,
   onSelectBreakdown,
   onChange,
+  columnDrag,
 }: DetailedReportFormProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -37,6 +40,11 @@ export function DetailedReportForm({
         <CardHeader
           title="Detailed CMS Report"
           description="Compose work breakdown and goals for stakeholders."
+          action={
+            columnDrag ? (
+              <div className="hidden shrink-0 xl:block">{columnDrag}</div>
+            ) : null
+          }
         />
         <RecipientsEditor error={errors.recipients} />
       </Card>

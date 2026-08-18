@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -42,6 +43,9 @@ function WorkBreakdownRow({
   onRemove: () => void;
   onUseLive: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item.category);
+  const nameRef = useRef<HTMLInputElement>(null);
   const hasLive = liveMinutes > 0;
   const locked = Boolean(item.minutesLocked);
   const displayMinutes = item.isNA
@@ -49,6 +53,35 @@ function WorkBreakdownRow({
     : locked || !hasLive
       ? item.minutes
       : minutesToInput(liveMinutes);
+
+  useEffect(() => {
+    if (!editing) {
+      setDraft(item.category);
+    }
+  }, [item.category, editing]);
+
+  useEffect(() => {
+    if (!editing) {
+      return;
+    }
+    const id = window.requestAnimationFrame(() => {
+      nameRef.current?.focus();
+      nameRef.current?.select();
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [editing]);
+
+  function commitName() {
+    const next = draft.trim();
+    setEditing(false);
+    if (!next) {
+      setDraft(item.category);
+      return;
+    }
+    if (next !== item.category) {
+      onUpdate({ category: next });
+    }
+  }
 
   return (
     <div
@@ -58,10 +91,17 @@ function WorkBreakdownRow({
       )}
     >
       <div className="flex flex-col gap-2.5 sm:grid sm:grid-cols-[1fr_minmax(5.75rem,7rem)_auto_auto] sm:items-center sm:gap-2">
-        {item.category.trim() ? (
-          <button
-            type="button"
+        {item.category.trim() || editing ? (
+          <div
+            role="button"
+            tabIndex={0}
             onClick={onSelect}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelect();
+              }
+            }}
             className={cn(
               "min-h-11 cursor-pointer rounded-xl border px-3.5 py-2.5 text-left text-sm font-medium transition-colors",
               selected
@@ -69,7 +109,40 @@ function WorkBreakdownRow({
                 : "border-border bg-surface text-text hover:border-primary/35",
             )}
           >
-            {item.category}
+            {editing ? (
+              <input
+                ref={nameRef}
+                value={draft}
+                onClick={(event) => event.stopPropagation()}
+                onChange={(event) => setDraft(event.target.value)}
+                onBlur={commitName}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    commitName();
+                  }
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    setDraft(item.category);
+                    setEditing(false);
+                  }
+                }}
+                aria-label={`Rename category ${index + 1}`}
+                className="w-full rounded-lg border border-primary/40 bg-background px-2 py-1 text-sm font-medium text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            ) : (
+              <span
+                className="inline-block max-w-full cursor-text rounded-sm decoration-primary/40 decoration-dotted underline-offset-4 hover:underline"
+                title="Click the name to rename"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setEditing(true);
+                }}
+              >
+                {item.category}
+              </span>
+            )}
             <span className="mt-0.5 block text-xs font-normal text-muted">
               {locked
                 ? "Custom minutes"
@@ -77,7 +150,7 @@ function WorkBreakdownRow({
                   ? `${formatMinutesShort(liveMinutes)} logged`
                   : "Open to add work"}
             </span>
-          </button>
+          </div>
         ) : (
           <Input
             id={`wb-category-${item.id}`}
@@ -184,7 +257,7 @@ export function WorkBreakdown({
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-text">Work Breakdown</h3>
           <p className="text-xs text-muted">
-            Tap a category to log work. Type minutes here for a custom total.
+            Tap a category to log work. Click the name to rename it.
           </p>
         </div>
         <Button

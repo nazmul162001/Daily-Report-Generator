@@ -419,18 +419,18 @@ html.theme-revealing body * {
 @keyframes workPanelIn {
   from {
     opacity: 0;
-    transform: translateX(-16px);
+    transform: translateX(-18px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
   }
 }
 
 @keyframes workDrawerIn {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(28px);
   }
   to {
     opacity: 1;
@@ -438,19 +438,74 @@ html.theme-revealing body * {
   }
 }
 
-.work-log-panel {
-  animation: workPanelIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+.work-log-slot-desktop {
+  align-self: start;
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  max-height: calc(100vh - 6rem);
+  pointer-events: none;
+  transition:
+    width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.35s ease;
 }
 
-@media (max-width: 1279px) {
-  .work-log-panel {
-    animation-name: workDrawerIn;
-    max-height: min(78vh, 42rem);
-  }
+.work-log-slot-desktop.is-open {
+  width: 26rem;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.work-log-slot-desktop .work-log-panel {
+  width: 26rem;
+  animation: workPanelIn 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.work-log-slot-mobile {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 0.75rem;
+  transform: translateY(110%);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.work-log-slot-mobile.is-open {
+  transform: translateY(0);
+}
+
+.work-log-slot-mobile .work-log-panel {
+  animation: workDrawerIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: min(78vh, 42rem);
+}
+
+.work-log-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgb(0 0 0 / 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.work-log-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.work-log-panel {
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .work-log-panel {
+  .work-log-slot-desktop,
+  .work-log-slot-mobile,
+  .work-log-backdrop,
+  .work-log-slot-desktop .work-log-panel,
+  .work-log-slot-mobile .work-log-panel {
+    transition: none !important;
     animation: none !important;
   }
 }
