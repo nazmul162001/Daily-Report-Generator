@@ -83,7 +83,7 @@ export function Modal({
     >
       {/* Full-viewport dim + blur (ports to body so it never inherits list transforms) */}
       <div
-        className="absolute inset-0 bg-black/55 backdrop-blur-md dark:bg-black/70"
+        className="absolute inset-0 bg-scrim/55 backdrop-blur-md dark:bg-scrim/70"
         aria-hidden
       />
       <button
@@ -106,7 +106,7 @@ export function Modal({
         )}
         style={{
           boxShadow:
-            "0 0 0 1px color-mix(in srgb, var(--color-border) 70%, transparent), 0 28px 60px -18px rgba(0, 0, 0, 0.55)",
+            "0 0 0 1px color-mix(in srgb, var(--color-border) 70%, transparent), var(--c-modal-shadow)",
         }}
       >
         <div className="mb-4 flex items-start justify-between gap-3 border-b border-border pb-3.5">

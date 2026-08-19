@@ -32,7 +32,7 @@ export function TaskItem({ task, onChange, onRemove }: TaskItemProps) {
               aria-label={`Include “${task.title}” in copied report`}
             />
             <span
-              className="flex h-5 w-5 items-center justify-center rounded-md border-2 border-border bg-surface transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-primary/30 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white"
+              className="flex h-5 w-5 items-center justify-center rounded-md border-2 border-border bg-surface transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-primary/30 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-on-primary"
               aria-hidden
             >
               {included ? (
@@ -66,7 +66,7 @@ export function TaskItem({ task, onChange, onRemove }: TaskItemProps) {
               onClick={() => onChange({ ...task, status: "completed" })}
               className={`cursor-pointer rounded-lg px-2.5 py-2.5 text-xs font-semibold transition-colors sm:py-1.5 ${
                 status === "completed"
-                  ? "bg-success text-white shadow-sm"
+                  ? "bg-success text-on-primary shadow-sm"
                   : "text-muted hover:text-text"
               }`}
               aria-pressed={status === "completed"}
@@ -78,7 +78,7 @@ export function TaskItem({ task, onChange, onRemove }: TaskItemProps) {
               onClick={() => onChange({ ...task, status: "ongoing" })}
               className={`cursor-pointer rounded-lg px-2.5 py-2.5 text-xs font-semibold transition-colors sm:py-1.5 ${
                 status === "ongoing"
-                  ? "bg-warning text-white shadow-sm"
+                  ? "bg-warning text-on-primary shadow-sm"
                   : "text-muted hover:text-text"
               }`}
               aria-pressed={status === "ongoing"}

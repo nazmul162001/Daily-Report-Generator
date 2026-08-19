@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { subscribeActivityChanged } from "@/lib/activityEvents";
 import { getTodayIsoDate } from "@/lib/date";
+import { STORAGE_KEYS } from "@/lib/storage";
 import { createId } from "@/lib/utils";
+import { syncWorkLogToTracking } from "@/features/work-log/syncToTracking";
+import { loadWorkLogStore } from "@/features/work-log/storage";
 import {
   emptyStore,
   findRunningTask,
@@ -54,14 +58,51 @@ export function useTimeTracking() {
   );
 
   useEffect(() => {
-    const loaded = persist(loadTimeTrackingStore());
+    const stamp = Date.now();
+    const todayDate = getTodayIsoDate();
+    syncWorkLogToTracking(loadWorkLogStore(todayDate, stamp), stamp);
+    const loaded = persist(loadTimeTrackingStore(todayDate, stamp));
     storeRef.current = loaded;
     hydratedRef.current = true;
     setStore(loaded);
-    setToday(getTodayIsoDate());
-    setNow(Date.now());
+    setToday(todayDate);
+    setNow(stamp);
     setHydrated(true);
   }, []);
+
+  const reloadFromStorage = useCallback(() => {
+    if (!hydratedRef.current) {
+      return;
+    }
+    const stamp = Date.now();
+    const todayDate = getTodayIsoDate();
+    syncWorkLogToTracking(loadWorkLogStore(todayDate, stamp), stamp);
+    const loaded = loadTimeTrackingStore(todayDate, stamp);
+    storeRef.current = loaded;
+    setStore(loaded);
+    setToday(todayDate);
+    setNow(stamp);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+    const unsubscribe = subscribeActivityChanged(reloadFromStorage);
+    function onStorage(event: StorageEvent) {
+      if (
+        event.key === STORAGE_KEYS.timeTracking ||
+        event.key === STORAGE_KEYS.workLog
+      ) {
+        reloadFromStorage();
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => {
+      unsubscribe();
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [hydrated, reloadFromStorage]);
 
   const running = useMemo(() => findRunningTask(store), [store]);
   const projects = useMemo(

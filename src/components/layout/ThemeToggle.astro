@@ -33,7 +33,7 @@
   </svg>
 
   <svg
-    class="theme-icon-sun relative h-[1.15rem] w-[1.15rem] text-amber-300 transition-transform duration-300 group-hover:rotate-45"
+    class="theme-icon-sun relative h-[1.15rem] w-[1.15rem] text-theme-sun transition-transform duration-300 group-hover:rotate-45"
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
     fill="none"
@@ -69,7 +69,9 @@
     }
 
     function themeMeta(theme) {
-      return theme === "dark" ? "#1c2338" : "#2563eb";
+      var root = document.documentElement;
+      var value = getComputedStyle(root).getPropertyValue("--c-theme-meta").trim();
+      return value || getComputedStyle(root).getPropertyValue("--color-primary").trim() || "#2563eb";
     }
 
     function applyLabel(theme) {

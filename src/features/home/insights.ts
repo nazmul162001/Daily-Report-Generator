@@ -6,6 +6,8 @@ import {
   startOfLocalMonth,
 } from "@/lib/date";
 import { getDay, loadTimeTrackingStore } from "@/features/time-tracking/storage";
+import { loadWorkLogStore } from "@/features/work-log/storage";
+import { syncWorkLogToTracking } from "@/features/work-log/syncToTracking";
 import { getProjectsDurationMinutes } from "@/features/time-tracking/totals";
 import { TIME_TRACKING_RETENTION_DAYS } from "@/features/time-tracking/types";
 
@@ -73,8 +75,9 @@ export function loadHomeInsights(
   toIso: string,
   today = getTodayIsoDate(),
 ): HomeInsightsData {
-  const store = loadTimeTrackingStore(today);
   const now = Date.now();
+  syncWorkLogToTracking(loadWorkLogStore(today, now), now);
+  const store = loadTimeTrackingStore(today, now);
 
   const uniqueProjects = new Set<string>();
   let minutes = 0;

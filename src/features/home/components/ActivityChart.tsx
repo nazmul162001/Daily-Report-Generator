@@ -10,15 +10,26 @@ import {
 } from "recharts";
 import { formatDisplayDate, formatShortMonthDay } from "@/lib/date";
 import { formatHoursFromMinutes } from "@/lib/duration";
+import {
+  CHART_SERIES,
+  chartSeriesColor,
+  readChartTheme,
+  type ChartSeriesKey,
+} from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { InsightDay } from "../insights";
 
-export const SERIES = [
-  { key: "projects" as const, label: "Projects", color: "#2dd4bf" },
-  { key: "completedTasks" as const, label: "Tasks completed", color: "#fbbf24" },
-] as const;
+export const SERIES = CHART_SERIES.map((item) => ({
+  key: item.key,
+  label: item.label,
+  colorVar: item.colorVar,
+}));
 
-type SeriesKey = (typeof SERIES)[number]["key"];
+function seriesColor(colorVar: string): string {
+  return chartSeriesColor(colorVar, "");
+}
+
+type SeriesKey = ChartSeriesKey;
 
 interface ChartRow {
   date: string;
@@ -36,17 +47,7 @@ interface ThemeTokens {
 }
 
 function readTheme(): ThemeTokens {
-  if (typeof document === "undefined") {
-    return { muted: "#64748b", grid: "rgba(148,163,184,0.28)" };
-  }
-  const root = document.documentElement;
-  const styles = getComputedStyle(root);
-  const muted = styles.getPropertyValue("--color-muted").trim() || "#64748b";
-  const isDark = root.getAttribute("data-theme") === "dark";
-  return {
-    muted,
-    grid: isDark ? "rgba(168,180,208,0.22)" : "rgba(148,163,184,0.35)",
-  };
+  return readChartTheme();
 }
 
 function dayRate(day: Pick<ChartRow, "completedTasks" | "openTasks">): string {
@@ -198,7 +199,7 @@ function ChartTooltip({
             <span className="inline-flex items-center gap-2">
               <i
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: item.color }}
+                style={{ backgroundColor: seriesColor(item.colorVar) }}
               />
               {item.label}
             </span>
@@ -224,6 +225,13 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
     completedTasks: false,
   });
   const [flipTip, setFlipTip] = useState(false);
+  const colors = useMemo(
+    () =>
+      Object.fromEntries(
+        SERIES.map((item) => [item.key, seriesColor(item.colorVar)]),
+      ) as Record<SeriesKey, string>,
+    [theme],
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -266,6 +274,7 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
         <div className="flex flex-wrap gap-2">
           {SERIES.map((item) => {
             const on = !hidden[item.key];
+            const color = colors[item.key];
             return (
               <button
                 key={item.key}
@@ -289,15 +298,15 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
                 style={
                   on
                     ? {
-                        borderColor: `${item.color}88`,
-                        background: `color-mix(in srgb, ${item.color} 16%, transparent)`,
+                        borderColor: `${color}88`,
+                        background: `color-mix(in srgb, ${color} 16%, transparent)`,
                       }
                     : undefined
                 }
               >
                 <span
                   className="h-2 w-2 rounded-full shadow-[0_0_10px_currentColor]"
-                  style={{ backgroundColor: item.color, color: item.color }}
+                  style={{ backgroundColor: color, color }}
                 />
                 {item.label}
               </button>
@@ -341,7 +350,9 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
               }}
             >
               <defs>
-                {SERIES.map((item) => (
+                {SERIES.map((item) => {
+                  const color = colors[item.key];
+                  return (
                   <linearGradient
                     key={item.key}
                     id={`${gradientId}-${item.key}`}
@@ -350,11 +361,12 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
                     x2="0"
                     y2="1"
                   >
-                    <stop offset="0%" stopColor={item.color} stopOpacity={0.42} />
-                    <stop offset="58%" stopColor={item.color} stopOpacity={0.12} />
-                    <stop offset="100%" stopColor={item.color} stopOpacity={0} />
+                    <stop offset="0%" stopColor={color} stopOpacity={0.42} />
+                    <stop offset="58%" stopColor={color} stopOpacity={0.12} />
+                    <stop offset="100%" stopColor={color} stopOpacity={0} />
                   </linearGradient>
-                ))}
+                  );
+                })}
               </defs>
               <CartesianGrid
                 vertical={false}
@@ -394,7 +406,7 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
                   dataKey={item.key}
                   name={item.label}
                   hide={hidden[item.key]}
-                  stroke={item.color}
+                  stroke={colors[item.key]}
                   fill={`url(#${gradientId}-${item.key})`}
                   strokeWidth={2.6}
                   strokeLinecap="round"
@@ -409,7 +421,7 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
                         key={`${item.key}-${props.index ?? point?.date ?? "dot"}`}
                         cx={props.cx}
                         cy={props.cy}
-                        fill={item.color}
+                        fill={colors[item.key]}
                         payload={point}
                       />
                     );
@@ -418,7 +430,7 @@ export function ActivityChart({ days }: { days: InsightDay[] }) {
                     <SeriesDot
                       cx={props.cx}
                       cy={props.cy}
-                      fill={item.color}
+                      fill={colors[item.key]}
                       payload={props.payload as ChartRow | undefined}
                       active
                     />
