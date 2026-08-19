@@ -9,7 +9,9 @@ import { getDraft, setPreferences } from "@/lib/repository";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { useDraftAutoSave } from "@/hooks/useDraftAutoSave";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useUserName } from "@/components/layout/WelcomeNameModal";
 import { copyToClipboard } from "@/lib/clipboard";
+import { setUserName } from "@/lib/userName";
 import type { DailyReportData } from "../types";
 import { formatDailyReport, formatDailyReportHtml } from "../utils";
 import { DailyReportForm } from "./DailyReportForm";
@@ -17,6 +19,8 @@ import { DailyReportPreview } from "./DailyReportPreview";
 
 function DailyReportPageInner() {
   const { showToast } = useToast();
+  const storedName = useUserName();
+  const [userName, setUserNameDraft] = useState(storedName);
   const [report, setReport] = useState<DailyReportData>(() =>
     createDefaultDailyReport(),
   );
@@ -44,13 +48,34 @@ function DailyReportPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    setUserNameDraft(storedName);
+  }, [storedName]);
+
+  function handleUserNameChange(value: string) {
+    setUserNameDraft(value);
+  }
+
+  function handleUserNameBlur() {
+    const trimmed = userName.trim();
+    if (trimmed) {
+      setUserName(trimmed);
+    }
+  }
+
   const draftStatus = useDraftAutoSave(
     STORAGE_KEYS.draftDailyReport,
     report,
     hydrated,
   );
-  const generated = useMemo(() => formatDailyReport(report), [report]);
-  const generatedHtml = useMemo(() => formatDailyReportHtml(report), [report]);
+  const generated = useMemo(
+    () => formatDailyReport(report, userName),
+    [report, userName],
+  );
+  const generatedHtml = useMemo(
+    () => formatDailyReportHtml(report, userName),
+    [report, userName],
+  );
 
   const validate = useCallback((): boolean => {
     const nextErrors: typeof errors = {};
@@ -84,7 +109,14 @@ function DailyReportPageInner() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <DailyReportForm report={report} errors={errors} onChange={setReport} />
+      <DailyReportForm
+        report={report}
+        errors={errors}
+        userName={userName}
+        onUserNameChange={handleUserNameChange}
+        onUserNameBlur={handleUserNameBlur}
+        onChange={setReport}
+      />
       <DailyReportPreview
         content={generated}
         htmlContent={generatedHtml}

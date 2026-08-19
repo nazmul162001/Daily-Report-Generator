@@ -9,16 +9,17 @@ export function buildSlackCodeReport(input: {
 }): { text: string; html: string } {
   const text = [input.title, input.date, "", input.codeBlock].join("\n");
 
-  const title = escapeHtml(input.title);
-  const date = escapeHtml(input.date);
-  const code = escapeHtml(input.codeBlock);
+  const titleHtml = input.title
+    .split("\n")
+    .map((line) => `<div>${escapeHtml(line)}</div>`)
+    .join("");
 
   // CF_HTML-style fragment so desktop apps (incl. Slack) detect rich paste
   const fragment = [
-    `<div>${title}</div>`,
-    `<div>${date}</div>`,
+    titleHtml,
+    `<div>${escapeHtml(input.date)}</div>`,
     "<div><br></div>",
-    `<pre style="white-space:pre-wrap;font-family:Menlo,Monaco,Consolas,monospace">${code}</pre>`,
+    `<pre style="white-space:pre-wrap;font-family:Menlo,Monaco,Consolas,monospace">${escapeHtml(input.codeBlock)}</pre>`,
   ].join("");
 
   const html = [

@@ -9,6 +9,8 @@ import {
 } from "@/lib/date";
 import { formatHoursFromMinutes, formatMinutesShort } from "@/lib/duration";
 import { cn } from "@/lib/utils";
+import { subscribeActivityChanged } from "@/lib/activityEvents";
+import { STORAGE_KEYS } from "@/lib/storage";
 import { TIME_TRACKING_RETENTION_DAYS } from "@/features/time-tracking/types";
 import { ActivityChart } from "./ActivityChart";
 import {
@@ -153,7 +155,28 @@ export function HomeInsights() {
 
   useEffect(() => {
     document.addEventListener("astro:page-load", reload);
-    return () => document.removeEventListener("astro:page-load", reload);
+    const unsubscribe = subscribeActivityChanged(reload);
+    function onStorage(event: StorageEvent) {
+      if (
+        event.key === STORAGE_KEYS.timeTracking ||
+        event.key === STORAGE_KEYS.workLog
+      ) {
+        reload();
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    function onVisible() {
+      if (document.visibilityState === "visible") {
+        reload();
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("astro:page-load", reload);
+      unsubscribe();
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [reload]);
 
   const taskTotal = data.taskRatio.completed + data.taskRatio.open;
@@ -182,7 +205,7 @@ export function HomeInsights() {
               className={cn(
                 "min-h-9 cursor-pointer rounded-xl px-3 text-sm font-medium transition-colors",
                 range === option.id
-                  ? "bg-primary text-white shadow-sm"
+                  ? "bg-primary text-on-primary shadow-sm"
                   : "bg-background text-muted ring-1 ring-border hover:bg-surface hover:text-text",
               )}
             >
@@ -239,14 +262,14 @@ export function HomeInsights() {
           value={String(data.projects)}
           hint={`${data.projectRatio.inProgress} still in progress`}
           icon={<FolderIcon />}
-          tone="bg-amber-500/15 text-amber-600 dark:text-amber-300"
+          tone="bg-accent-warm/15 text-accent-warm"
         />
         <MetricCard
           label="Completion rate"
           value={percent(data.taskRatio.completed, taskTotal)}
           hint={`${taskTotal} task${taskTotal === 1 ? "" : "s"} in this range`}
           icon={<RateIcon />}
-          tone="bg-violet-500/15 text-violet-600 dark:text-violet-300"
+          tone="bg-accent-cool/15 text-accent-cool"
         />
       </div>
 

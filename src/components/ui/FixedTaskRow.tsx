@@ -34,7 +34,7 @@ export function FixedTaskRow({
           aria-label={`Include “${task.title}” in copied report`}
         />
         <span
-          className="flex h-5 w-5 items-center justify-center rounded-md border-2 border-border bg-surface transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-primary/30 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white"
+          className="flex h-5 w-5 items-center justify-center rounded-md border-2 border-border bg-surface transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-primary/30 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-on-primary"
           aria-hidden
         >
           {included ? (

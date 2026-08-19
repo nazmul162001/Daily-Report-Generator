@@ -1,3 +1,4 @@
+import { dispatchActivityChanged } from "@/lib/activityEvents";
 import {
   endOfLocalDayMs,
   getLocalRetentionCutoffIso,
@@ -314,10 +315,16 @@ export function loadTimeTrackingStore(
   return emptyStore();
 }
 
-export function saveTimeTrackingStore(store: TimeTrackingStore): TimeTrackingStore {
+export function saveTimeTrackingStore(
+  store: TimeTrackingStore,
+  options?: { skipWorkLogSync?: boolean },
+): TimeTrackingStore {
   const prepared = prepareStore(store);
   setStorageItem(STORAGE_KEYS.timeTracking, prepared);
   setStorageItem(STORAGE_KEYS.timeTrackingBackup, prepared);
+  if (!options?.skipWorkLogSync) {
+    dispatchActivityChanged();
+  }
   return prepared;
 }
 

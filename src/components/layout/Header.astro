@@ -46,7 +46,7 @@ function isActive(href: string): boolean {
       aria-label="Daily Report Generator home"
     >
       <span
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white shadow-sm ring-1 ring-white/15"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-hover text-on-brand shadow-sm ring-1 ring-on-brand/15"
         aria-hidden="true"
       >
         <BrandMark class="h-[1.15rem] w-[1.15rem]" />
@@ -74,7 +74,7 @@ function isActive(href: string): boolean {
           class:list={[
             "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors xl:px-3",
             isActive(link.href)
-              ? "bg-primary text-white shadow-sm"
+              ? "bg-primary text-on-primary shadow-sm"
               : "text-muted hover:bg-background hover:text-text",
           ]}
           aria-current={isActive(link.href) ? "page" : undefined}
@@ -90,8 +90,8 @@ function isActive(href: string): boolean {
         target="_blank"
         rel="noopener noreferrer"
         class="group inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2 text-sm font-medium text-text transition-all hover:border-primary/30 hover:bg-surface hover:shadow-sm sm:h-10 sm:px-3"
-        aria-label="Star on GitHub"
-        title="Star on GitHub"
+        aria-label="Collaborate on GitHub"
+        title="Collaborate on GitHub"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -101,12 +101,15 @@ function isActive(href: string): boolean {
           stroke-width="1.75"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="h-4 w-4 text-muted transition-colors group-hover:fill-amber-400 group-hover:stroke-amber-500 group-hover:text-amber-500"
+          class="h-4 w-4 text-muted transition-colors group-hover:text-primary"
           aria-hidden="true"
         >
-          <path d="M12 3.2l2.35 4.76 5.25.76-3.8 3.7.9 5.22L12 15.9l-4.7 2.47.9-5.22-3.8-3.7 5.25-.76L12 3.2z" />
+          <circle cx="6" cy="6" r="3" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="6" r="3" />
+          <path d="M6 9v6M9 6h5a3 3 0 0 1 3 3v3" />
         </svg>
-        <span class="hidden sm:inline">Star</span>
+        <span class="hidden sm:inline">Collaborate</span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 16 16"
@@ -137,7 +140,7 @@ function isActive(href: string): boolean {
                 data-nav-mobile
                 class:list={[
                   "block rounded-xl px-3 py-3 text-sm font-medium",
-                  isActive(link.href) ? "bg-primary text-white shadow-sm" : "text-text hover:bg-background",
+                  isActive(link.href) ? "bg-primary text-on-primary shadow-sm" : "text-text hover:bg-background",
                 ]}
                 aria-current={isActive(link.href) ? "page" : undefined}
               >
@@ -187,10 +190,10 @@ function isActive(href: string): boolean {
           node.setAttribute("aria-current", "page");
           if (isMobile) {
             node.className =
-              "block rounded-xl px-3 py-3 text-sm font-medium bg-primary text-white shadow-sm";
+              "block rounded-xl px-3 py-3 text-sm font-medium bg-primary text-on-primary shadow-sm";
           } else {
             node.className =
-              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors xl:px-3 bg-primary text-white shadow-sm";
+              "whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors xl:px-3 bg-primary text-on-primary shadow-sm";
           }
         } else {
           node.removeAttribute("aria-current");

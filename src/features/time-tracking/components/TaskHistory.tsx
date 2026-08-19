@@ -180,7 +180,7 @@ function FilterChip({
       className={cn(
         "min-h-9 cursor-pointer rounded-xl px-3 text-sm font-medium transition-colors",
         active
-          ? "bg-primary text-white shadow-sm"
+          ? "bg-primary text-on-primary shadow-sm"
           : "bg-background text-muted ring-1 ring-border hover:bg-surface hover:text-text",
       )}
     >

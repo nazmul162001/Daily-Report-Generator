@@ -44,7 +44,7 @@ export function EmptyState({
       {actionLabel && actionHref ? (
         <a
           href={actionHref}
-          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-hover"
+          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-on-primary shadow-sm transition-colors hover:bg-primary-hover"
         >
           {actionLabel}
         </a>

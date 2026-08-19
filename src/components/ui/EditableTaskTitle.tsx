@@ -16,17 +16,23 @@ export function EditableTaskTitle({ title, onSave }: EditableTaskTitleProps) {
   const fieldId = useId();
 
   useEffect(() => {
-    if (open) {
-      setDraft(title);
-      setError(null);
-      // Focus after modal mounts / paints
-      const id = window.requestAnimationFrame(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      });
-      return () => window.cancelAnimationFrame(id);
+    if (!open) {
+      return;
     }
+    setDraft(title);
+    setError(null);
   }, [open, title]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const id = window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [open]);
 
   function close() {
     setOpen(false);

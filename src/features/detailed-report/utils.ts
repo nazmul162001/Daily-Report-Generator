@@ -1,6 +1,7 @@
 import { DEFAULT_RECIPIENTS } from "@/data/defaultTemplates";
 import {
   formatDurationLabel,
+  formatHoursFromMinutes,
   parseMinutes,
 } from "./duration";
 import type { DetailedReportData } from "./types";
@@ -36,6 +37,40 @@ function isBreakdownNA(
   }
   const minutes = parseMinutes(displayMinutesForItem(item, logDay, now));
   return minutes === null || minutes === 0;
+}
+
+function totalBreakdownMinutes(
+  report: DetailedReportData,
+  logDay: WorkLogDay,
+  now: number,
+): number {
+  let total = 0;
+  for (const item of report.workBreakdown) {
+    if (!item.category.trim()) {
+      continue;
+    }
+    if (isBreakdownNA(item, logDay, now)) {
+      continue;
+    }
+    const minutes = parseMinutes(displayMinutesForItem(item, logDay, now));
+    if (minutes !== null) {
+      total += minutes;
+    }
+  }
+  return Math.round(total * 100) / 100;
+}
+
+function formatTotalTimeValue(total: number): string {
+  const minsLabel = Number.isInteger(total) ? String(total) : String(total);
+  return `${minsLabel} minutes (${formatHoursFromMinutes(total)} hours)`;
+}
+
+function formatTotalTimeLine(
+  report: DetailedReportData,
+  logDay: WorkLogDay,
+  now: number,
+): string {
+  return `Total time: ${formatTotalTimeValue(totalBreakdownMinutes(report, logDay, now))}`;
 }
 
 /**
@@ -86,6 +121,11 @@ export function formatDetailedReport(
     for (const text of tomorrowGoals) {
       lines.push(`• ${text}`);
     }
+  }
+
+  if (report.workBreakdown.some((item) => item.category.trim())) {
+    lines.push("");
+    lines.push(formatTotalTimeLine(report, logDay, now));
   }
 
   return lines.join("\n");
@@ -145,6 +185,15 @@ export function formatDetailedReportHtml(
       parts.push(`<li>${escapeHtml(text)}</li>`);
     }
     parts.push("</ul>");
+  }
+
+  if (report.workBreakdown.some((item) => item.category.trim())) {
+    parts.push("<div><br></div>");
+    parts.push(
+      `<div><strong>Total time:</strong> ${escapeHtml(
+        formatTotalTimeValue(totalBreakdownMinutes(report, logDay, now)),
+      )}</div>`,
+    );
   }
 
   return [

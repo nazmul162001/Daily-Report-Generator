@@ -21,11 +21,6 @@ export function useKeyboardShortcuts({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      const isMod = event.metaKey || event.ctrlKey;
-      if (!isMod) {
-        return;
-      }
-
       const target = event.target as HTMLElement | null;
       const isTyping =
         target?.tagName === "INPUT" ||
@@ -33,15 +28,18 @@ export function useKeyboardShortcuts({
         target?.tagName === "SELECT" ||
         target?.isContentEditable;
 
-      if (event.key === "Enter" && copyRef.current) {
-        event.preventDefault();
-        copyRef.current();
+      if (isTyping) {
         return;
       }
 
-      // Avoid handling other shortcuts while typing
-      if (isTyping) {
+      const isMod = event.metaKey || event.ctrlKey;
+      if (!isMod) {
         return;
+      }
+
+      if (event.key === "Enter" && copyRef.current) {
+        event.preventDefault();
+        copyRef.current();
       }
     }
 

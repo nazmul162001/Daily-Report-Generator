@@ -170,7 +170,7 @@ function DayCell({
           !inMonth && !filled && "text-muted/40",
           inMonth && !filled && !disabled && "text-text",
           disabled && "opacity-30",
-          filled && "border-primary bg-primary font-semibold text-white",
+          filled && "border-primary bg-primary font-semibold text-on-primary",
           isToday && !filled && "border-primary",
           isHoverCursor && "border-border bg-background",
         )}
@@ -179,7 +179,7 @@ function DayCell({
       </span>
 
       {showTooltip ? (
-        <span className="pointer-events-none absolute top-full z-20 mt-1 whitespace-nowrap rounded-md bg-zinc-900 px-2 py-1 text-[11px] font-medium text-white shadow-lg dark:bg-zinc-950">
+        <span className="pointer-events-none absolute top-full z-20 mt-1 whitespace-nowrap rounded-md bg-tooltip-bg px-2 py-1 text-[11px] font-medium text-tooltip-fg shadow-lg">
           {formatHoverLabel(iso)}
         </span>
       ) : null}
@@ -380,7 +380,7 @@ export function DateRangePicker({
       document.body.style.overflow = previousOverflow;
       previousActive?.focus();
     };
-  }, [open, today, max, setOpen]);
+  }, [open]);
 
   const headerRange = (() => {
     if (!draftStart) {
@@ -473,7 +473,7 @@ export function DateRangePicker({
               role="presentation"
             >
               <div
-                className="absolute inset-0 bg-black/55 backdrop-blur-md dark:bg-black/70"
+                className="absolute inset-0 bg-scrim/55 backdrop-blur-md dark:bg-scrim/70"
                 aria-hidden
               />
               <button
@@ -491,7 +491,7 @@ export function DateRangePicker({
                 className="relative z-10 flex max-h-[min(100dvh,44rem)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-border bg-surface shadow-2xl focus:outline-none sm:max-w-[44rem] sm:rounded-2xl"
                 style={{
                   boxShadow:
-                    "0 0 0 1px color-mix(in srgb, var(--color-border) 70%, transparent), 0 28px 60px -18px rgba(0, 0, 0, 0.55)",
+                    "0 0 0 1px color-mix(in srgb, var(--color-border) 70%, transparent), var(--c-modal-shadow)",
                 }}
               >
                 <div className="border-b border-border px-4 py-3 sm:px-5">

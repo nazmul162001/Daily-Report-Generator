@@ -5,6 +5,7 @@ import Seo from "./Seo.astro";
 import Header from "./Header.astro";
 import Footer from "./Footer.astro";
 import InstallPrompt from "./InstallPrompt.astro";
+import { WelcomeNameModal } from "./WelcomeNameModal";
 
 interface Props {
   title?: string;
@@ -43,15 +44,19 @@ const {
           }
         }
 
+        function themeMetaColor(doc) {
+          var root = doc && doc.documentElement;
+          if (!root) return "";
+          var value = getComputedStyle(root).getPropertyValue("--c-theme-meta").trim();
+          return value || getComputedStyle(root).getPropertyValue("--color-primary").trim() || "#2563eb";
+        }
+
         function applyThemeTo(doc, theme) {
           if (!doc || !doc.documentElement) return;
           doc.documentElement.setAttribute("data-theme", theme);
           var meta = doc.querySelector('meta[name="theme-color"]');
           if (meta) {
-            meta.setAttribute(
-              "content",
-              theme === "dark" ? "#1c2338" : "#2563eb",
-            );
+            meta.setAttribute("content", themeMetaColor(doc));
           }
         }
 
@@ -84,7 +89,7 @@ const {
   <body class="flex min-h-screen flex-col bg-background text-text">
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-white"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-on-primary"
     >
       Skip to content
     </a>
@@ -103,5 +108,6 @@ const {
     </main>
     <Footer />
     <InstallPrompt />
+    <WelcomeNameModal client:load transition:persist="welcome-name-modal" />
   </body>
 </html>

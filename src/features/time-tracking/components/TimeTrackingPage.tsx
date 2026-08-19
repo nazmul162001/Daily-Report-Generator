@@ -87,7 +87,7 @@ function TimeTrackingPageInner() {
           className={cn(
             "min-h-11 flex-1 cursor-pointer rounded-xl px-3 text-sm font-medium transition-colors",
             tab === "tracking"
-              ? "bg-primary text-white shadow-sm"
+              ? "bg-primary text-on-primary shadow-sm"
               : "text-muted hover:bg-background hover:text-text",
           )}
           onClick={() => setTab("tracking")}
@@ -103,7 +103,7 @@ function TimeTrackingPageInner() {
           className={cn(
             "min-h-11 flex-1 cursor-pointer rounded-xl px-3 text-sm font-medium transition-colors",
             tab === "history"
-              ? "bg-primary text-white shadow-sm"
+              ? "bg-primary text-on-primary shadow-sm"
               : "text-muted hover:bg-background hover:text-text",
           )}
           onClick={() => setTab("history")}

@@ -1,3 +1,4 @@
+import { dispatchActivityChanged } from "@/lib/activityEvents";
 import {
   endOfLocalDayMs,
   getLocalRetentionCutoffIso,
@@ -15,6 +16,7 @@ import type {
   WorkLogKind,
   WorkLogStore,
 } from "./types";
+import { syncWorkLogToTracking } from "./syncToTracking";
 import { WORK_LOG_RETENTION_DAYS, WORK_LOG_VERSION } from "./types";
 
 export function emptyDay(): WorkLogDay {
@@ -476,6 +478,8 @@ export function loadWorkLogStore(
 export function saveWorkLogStore(store: WorkLogStore): WorkLogStore {
   const prepared = prepareStore(store);
   setStorageItem(STORAGE_KEYS.workLog, prepared);
+  syncWorkLogToTracking(prepared);
+  dispatchActivityChanged();
   return prepared;
 }
 
