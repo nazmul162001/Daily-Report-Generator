@@ -107,4 +107,6 @@ export const STORAGE_KEYS = {
   workLog: "drg:work-log",
   /** Column order for Detailed Report (form / log / preview). */
   detailedReportColumns: "drg:detailed-report:columns",
+  /** Display name for Daily Report title (local + cookie). */
+  userProfile: "drg:user-profile",
 } as const;

@@ -30,17 +30,29 @@ function formatCmsBlock(
   return lines.join("\n");
 }
 
-export function formatDailyReport(report: DailyReportData): string {
+export function formatDailyReport(
+  report: DailyReportData,
+  userName = "",
+): string {
+  const title = userName.trim()
+    ? `Daily Report Of\n${userName.trim()}`
+    : "Daily Report";
   return buildSlackCodeReport({
-    title: "Daily Report",
+    title,
     date: formatDisplayDate(report.date),
     codeBlock: formatCmsBlock(report.section, report.tasks),
   }).text;
 }
 
-export function formatDailyReportHtml(report: DailyReportData): string {
+export function formatDailyReportHtml(
+  report: DailyReportData,
+  userName = "",
+): string {
+  const title = userName.trim()
+    ? `Daily Report Of\n${userName.trim()}`
+    : "Daily Report";
   return buildSlackCodeReport({
-    title: "Daily Report",
+    title,
     date: formatDisplayDate(report.date),
     codeBlock: formatCmsBlock(report.section, report.tasks),
   }).html;

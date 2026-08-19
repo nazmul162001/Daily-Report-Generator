@@ -380,7 +380,7 @@ export function DateRangePicker({
       document.body.style.overflow = previousOverflow;
       previousActive?.focus();
     };
-  }, [open, today, max, setOpen]);
+  }, [open]);
 
   const headerRange = (() => {
     if (!draftStart) {

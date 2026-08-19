@@ -22,6 +22,11 @@ export function Modal({
 }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) {
@@ -31,7 +36,7 @@ export function Modal({
     const previousActive = document.activeElement as HTMLElement | null;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -39,9 +44,24 @@ export function Modal({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    // Focus panel after portal mount
+    // Focus once when opened — never steal focus again on parent re-renders.
     const frame = window.requestAnimationFrame(() => {
-      dialogRef.current?.focus();
+      const dialog = dialogRef.current;
+      if (!dialog) {
+        return;
+      }
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && dialog.contains(active)) {
+        return;
+      }
+      const autofocus = dialog.querySelector<HTMLElement>(
+        'input:not([type="hidden"]), textarea, select, [autofocus]',
+      );
+      if (autofocus) {
+        autofocus.focus();
+      } else {
+        dialog.focus();
+      }
     });
 
     return () => {
@@ -50,7 +70,7 @@ export function Modal({
       document.body.style.overflow = previousOverflow;
       previousActive?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open || typeof document === "undefined") {
     return null;

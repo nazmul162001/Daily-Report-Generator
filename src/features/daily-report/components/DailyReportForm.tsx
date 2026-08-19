@@ -9,12 +9,18 @@ interface DailyReportFormProps {
     section?: string;
     tasks?: string;
   };
+  userName: string;
+  onUserNameChange: (name: string) => void;
+  onUserNameBlur?: () => void;
   onChange: (report: DailyReportData) => void;
 }
 
 export function DailyReportForm({
   report,
   errors,
+  userName,
+  onUserNameChange,
+  onUserNameBlur,
   onChange,
 }: DailyReportFormProps) {
   return (
@@ -25,6 +31,16 @@ export function DailyReportForm({
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          id="daily-user-name"
+          label="Your name"
+          value={userName}
+          onChange={(event) => onUserNameChange(event.target.value)}
+          onBlur={onUserNameBlur}
+          placeholder="e.g. Nazmul Hassan"
+          hint="Shown as Daily Report Of [name] in the generated report."
+          autoComplete="name"
+        />
         <Input
           id="daily-date"
           label="Date"
@@ -43,6 +59,7 @@ export function DailyReportForm({
           }
           error={errors.section}
           required
+          className="sm:col-span-2"
         />
       </div>
 

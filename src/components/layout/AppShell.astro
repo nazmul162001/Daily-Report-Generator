@@ -5,6 +5,7 @@ import Seo from "./Seo.astro";
 import Header from "./Header.astro";
 import Footer from "./Footer.astro";
 import InstallPrompt from "./InstallPrompt.astro";
+import { WelcomeNameModal } from "./WelcomeNameModal";
 
 interface Props {
   title?: string;
@@ -103,5 +104,6 @@ const {
     </main>
     <Footer />
     <InstallPrompt />
+    <WelcomeNameModal client:load transition:persist="welcome-name-modal" />
   </body>
 </html>
