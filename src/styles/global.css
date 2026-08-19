@@ -378,6 +378,62 @@ html.theme-revealing body * {
   }
 }
 
+/*
+  Work Breakdown rows — one grid for drag + category + minutes + delete.
+  Plain CSS grid areas survive Astro ClientRouter navigations (unlike
+  flex-wrap / display:contents patterns that can reflow incorrectly).
+*/
+.work-breakdown-row {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  column-gap: 0.375rem;
+  row-gap: 0.5rem;
+  align-items: stretch;
+  grid-template-columns: 2rem minmax(0, 1fr) 2.75rem;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "drag category category"
+    "drag minutes delete";
+}
+
+@media (min-width: 640px) {
+  .work-breakdown-row {
+    column-gap: 0.5rem;
+    row-gap: 0;
+    grid-template-columns: 2rem minmax(0, 1fr) 5.75rem 2.75rem;
+    grid-template-rows: auto;
+    grid-template-areas: "drag category minutes delete";
+  }
+}
+
+.work-breakdown-row__drag {
+  grid-area: drag;
+  align-self: stretch;
+  justify-self: center;
+  height: 100%;
+  min-height: 4.25rem;
+}
+
+.work-breakdown-row__category {
+  grid-area: category;
+  min-width: 0;
+  min-height: 4.25rem;
+}
+
+.work-breakdown-row__minutes {
+  grid-area: minutes;
+  min-width: 0;
+  min-height: 4.25rem;
+}
+
+.work-breakdown-row__delete {
+  grid-area: delete;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 4.25rem;
+}
+
 .work-log-slot-desktop {
   width: 0;
   min-width: 0;

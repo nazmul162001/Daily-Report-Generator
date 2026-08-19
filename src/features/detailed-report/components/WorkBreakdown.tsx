@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/Button";
+import { DragHandle } from "@/components/ui/DragHandle";
 import { Input } from "@/components/ui/Input";
 import {
   SortableList,
-  SortableRowLayout,
+  type DragHandleBind,
 } from "@/components/ui/SortableList";
 import { formatMinutesShort } from "@/lib/duration";
 import { createId, cn } from "@/lib/utils";
@@ -21,12 +22,53 @@ interface WorkBreakdownProps {
   onChange: (items: WorkBreakdownItem[]) => void;
 }
 
+function OpenLogButton({
+  selected,
+  label,
+  onClick,
+}: {
+  selected: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Open work log for ${label}`}
+      aria-pressed={selected}
+      title="Open work log panel"
+      className={cn(
+        "flex w-[3.25rem] shrink-0 flex-col items-center justify-center gap-0.5 self-stretch border-l px-2 py-2 transition-colors sm:px-2.5",
+        selected
+          ? "border-primary/35 bg-primary/15 text-primary"
+          : "border-border text-muted hover:bg-primary/10 hover:text-primary",
+      )}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-4 w-4"
+        aria-hidden
+      >
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path strokeLinecap="round" d="M9 4v16" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10l3 2-3 2" />
+      </svg>
+      <span className="text-[10px] font-semibold uppercase tracking-wide">Log</span>
+    </button>
+  );
+}
+
 function WorkBreakdownRow({
   item,
   index,
   total,
   selected,
   liveMinutes,
+  drag,
   onSelect,
   onUpdate,
   onRemove,
@@ -37,6 +79,7 @@ function WorkBreakdownRow({
   total: number;
   selected: boolean;
   liveMinutes: number;
+  drag: DragHandleBind;
   onSelect: () => void;
   onUpdate: (patch: Partial<WorkBreakdownItem>) => void;
   onRemove: () => void;
@@ -54,67 +97,91 @@ function WorkBreakdownRow({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-background/50 p-3 transition-colors sm:border-0 sm:bg-transparent sm:p-0",
+        "w-full rounded-xl border bg-background/50 p-3 transition-colors sm:border-0 sm:bg-transparent sm:p-0",
         selected ? "border-primary/50 ring-2 ring-primary/20 sm:ring-0" : "border-border",
       )}
     >
-      <div className="flex flex-col gap-2.5 sm:grid sm:grid-cols-[1fr_minmax(5.75rem,7rem)_auto] sm:items-center sm:gap-2">
+      {/*
+        One explicit CSS grid (.work-breakdown-row in global.css) for drag +
+        category + minutes + delete. Avoids flex-wrap and display:contents, which
+        break after Astro ClientRouter page swaps.
+      */}
+      <div className="work-breakdown-row">
+        <DragHandle
+          className="work-breakdown-row__drag h-auto w-8 self-stretch rounded-lg"
+          {...drag.attributes}
+          {...drag.listeners}
+        />
+
         <div
           className={cn(
-            "rounded-xl border transition-colors",
+            "work-breakdown-row__category flex overflow-hidden rounded-xl border",
             selected
               ? "border-primary/50 bg-primary/10"
               : "border-border bg-surface hover:border-primary/35",
           )}
         >
-          <Input
-            id={`wb-category-${item.id}`}
-            value={item.category}
-            onChange={(event) => onUpdate({ category: event.target.value })}
-            onFocus={onSelect}
-            placeholder="Category"
-            aria-label={`Category ${index + 1}`}
-            className="border-0 bg-transparent shadow-none focus:ring-0"
+          <div className="min-w-0 flex-1">
+            <Input
+              id={`wb-category-${item.id}`}
+              value={item.category}
+              onChange={(event) => onUpdate({ category: event.target.value })}
+              onFocus={onSelect}
+              placeholder="Category"
+              aria-label={`Category ${index + 1}`}
+              className="min-h-11 border-0 bg-transparent shadow-none focus:ring-0"
+            />
+            <p className="px-3.5 pb-2.5 text-xs font-normal text-muted">
+              {locked
+                ? "Custom minutes"
+                : hasLive
+                  ? `${formatMinutesShort(liveMinutes)} logged`
+                  : "Tap Log to add work"}
+            </p>
+          </div>
+          <OpenLogButton
+            selected={selected}
+            label={item.category.trim() || `row ${index + 1}`}
+            onClick={onSelect}
           />
-          <p className="px-3.5 pb-2.5 text-xs font-normal text-muted">
-            {locked
-              ? "Custom minutes"
-              : hasLive
-                ? `${formatMinutesShort(liveMinutes)} logged`
-                : "Open to add work"}
+        </div>
+
+        <div className="work-breakdown-row__minutes flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
+          <div className="flex flex-1 items-center justify-center px-2 pt-2">
+            <input
+              id={`wb-minutes-${item.id}`}
+              inputMode="numeric"
+              value={displayMinutes}
+              onChange={(event) => {
+                const raw = event.target.value.replace(/[^\d.]/g, "");
+                onUpdate({ minutes: raw, isNA: false, minutesLocked: true });
+              }}
+              placeholder="0"
+              aria-label={`Minutes ${index + 1}`}
+              title="Type custom minutes. Live time fills this unless you edit it."
+              className="w-full min-w-0 border-0 bg-transparent text-center text-base font-semibold tabular-nums text-text placeholder:text-muted/50 focus:outline-none sm:text-sm"
+            />
+          </div>
+          <p className="px-2 pb-2.5 text-center text-xs font-normal text-muted">
+            Minutes
           </p>
         </div>
 
-        <div className="grid grid-cols-[1fr_auto] items-center gap-2 sm:contents">
-          <Input
-            id={`wb-minutes-${item.id}`}
-            inputMode="numeric"
-            value={displayMinutes}
-            onChange={(event) => {
-              const raw = event.target.value.replace(/[^\d.]/g, "");
-              onUpdate({ minutes: raw, isNA: false, minutesLocked: true });
-            }}
-            placeholder="0"
-            aria-label={`Minutes ${index + 1}`}
-            title="Type custom minutes. Live time fills this unless you edit it."
-            className="min-h-11"
-          />
-
-          <button
-            type="button"
-            onClick={onRemove}
-            disabled={total <= 1}
-            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl text-danger transition-colors hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label={`Remove row ${index + 1}`}
-            title="Remove row"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M9 6V4h6v2m-8 0v14a2 2 0 002 2h6a2 2 0 002-2V6" />
-              <path strokeLinecap="round" d="M10 11v6M14 11v6" />
-            </svg>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={total <= 1}
+          className="work-breakdown-row__delete box-border flex cursor-pointer items-center justify-center rounded-xl border border-border bg-surface text-danger transition-colors hover:border-danger/30 hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label={`Remove row ${index + 1}`}
+          title="Remove row"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5 shrink-0" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M9 6V4h6v2m-8 0v14a2 2 0 002 2h6a2 2 0 002-2V6" />
+            <path strokeLinecap="round" d="M10 11v6M14 11v6" />
+          </svg>
+        </button>
       </div>
+
       {locked && hasLive ? (
         <button
           type="button"
@@ -169,7 +236,8 @@ export function WorkBreakdown({
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-text">Work Breakdown</h3>
           <p className="text-xs text-muted">
-            Tap a category to log work. Click the name to rename it.
+            Click <span className="font-medium text-text">Log</span> on a category to
+            open the work panel.
           </p>
         </div>
         <Button
@@ -192,25 +260,24 @@ export function WorkBreakdown({
           const kind = kindFromCategory(item.category);
           const live = roundLiveMinutes(liveMinutesForKind(logDay, kind, now));
           return (
-            <SortableRowLayout drag={drag}>
-              <WorkBreakdownRow
-                item={item}
-                index={index}
-                total={items.length}
-                selected={selectedId === item.id}
-                liveMinutes={live}
-                onSelect={() => onSelect(item.id)}
-                onUpdate={(patch) => updateItem(item.id, patch)}
-                onRemove={() => removeRow(item.id)}
-                onUseLive={() =>
-                  updateItem(item.id, {
-                    minutesLocked: false,
-                    isNA: false,
-                    minutes: minutesToInput(live),
-                  })
-                }
-              />
-            </SortableRowLayout>
+            <WorkBreakdownRow
+              item={item}
+              index={index}
+              total={items.length}
+              selected={selectedId === item.id}
+              liveMinutes={live}
+              drag={drag}
+              onSelect={() => onSelect(item.id)}
+              onUpdate={(patch) => updateItem(item.id, patch)}
+              onRemove={() => removeRow(item.id)}
+              onUseLive={() =>
+                updateItem(item.id, {
+                  minutesLocked: false,
+                  isNA: false,
+                  minutes: minutesToInput(live),
+                })
+              }
+            />
           );
         }}
       />
