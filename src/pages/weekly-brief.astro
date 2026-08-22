@@ -1,0 +1,17 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { WeeklyBriefPage } from "@/features/weekly-brief/components/WeeklyBriefPage";
+---
+
+<AppShell
+  title="Weekly Brief | Daily Report Generator"
+  description="Full weekly report of hours, daily breakdown, focus areas, projects, and key signals."
+>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-text sm:text-3xl">Weekly Brief</h1>
+    <p class="mt-1 text-sm text-muted">
+      Turn your tracked week into a full detail report — then copy to Slack or email.
+    </p>
+  </div>
+  <WeeklyBriefPage client:load />
+</AppShell>

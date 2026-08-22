@@ -13,6 +13,7 @@ import { subscribeActivityChanged } from "@/lib/activityEvents";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { TIME_TRACKING_RETENTION_DAYS } from "@/features/time-tracking/types";
 import { ActivityChart } from "./ActivityChart";
+import { WeeklyBriefTeaser } from "@/features/weekly-brief/components/WeeklyBriefPage";
 import {
   loadHomeInsights,
   resolveInsightRange,
@@ -272,6 +273,8 @@ export function HomeInsights() {
           tone="bg-accent-cool/15 text-accent-cool"
         />
       </div>
+
+      <WeeklyBriefTeaser />
 
       <Card>
         <ActivityChart days={data.days} />
