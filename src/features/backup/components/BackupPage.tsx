@@ -634,9 +634,9 @@ export function BackupPage() {
         <div className="flex min-h-0 flex-1 flex-col gap-4 text-text">
           <Input
             id={titleId}
-            label="Project title"
+            label="Project Name / Case Number"
             value={title}
-            placeholder="Test-1"
+            placeholder="Example: Case-420 example.com"
             autoComplete="off"
             onChange={(event) => setTitle(event.target.value)}
           />
