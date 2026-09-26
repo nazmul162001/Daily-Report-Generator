@@ -3,6 +3,41 @@
  * Used by Detailed Report work breakdown and Time Tracking.
  */
 
+export type DurationUnit = "minutes" | "hours";
+
+/**
+ * Manual time entry in an explicit unit.
+ * `1` with minutes is 1 minute. `1` with hours is 60 minutes.
+ * `0.75` with hours is 45 minutes.
+ */
+export function parseDurationInput(raw: string, unit: DurationUnit): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return 0;
+  }
+  if (!/^\d*\.?\d*$/.test(trimmed) || trimmed === ".") {
+    return null;
+  }
+  const value = Number(trimmed);
+  if (!Number.isFinite(value) || value < 0) {
+    return null;
+  }
+  const minutes = unit === "hours" ? value * 60 : value;
+  return Math.round(minutes * 100) / 100;
+}
+
+/** Show a stored minute total in the unit the user is editing. */
+export function formatDurationInput(minutes: number, unit: DurationUnit): string {
+  const rounded = Math.round(minutes * 100) / 100;
+  if (rounded <= 0) {
+    return "0";
+  }
+  if (unit === "hours") {
+    return formatHoursFromMinutes(rounded);
+  }
+  return String(rounded);
+}
+
 export function parseMinutes(value: string): number | null {
   const trimmed = value.trim();
   if (!trimmed) {

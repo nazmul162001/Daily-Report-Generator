@@ -401,7 +401,7 @@ html.theme-revealing body * {
   .work-breakdown-row {
     column-gap: 0.5rem;
     row-gap: 0;
-    grid-template-columns: 2rem minmax(0, 1fr) 5.75rem 2.75rem;
+    grid-template-columns: 2rem minmax(0, 1fr) 6.75rem 2.75rem;
     grid-template-rows: auto;
     grid-template-areas: "drag category minutes delete";
   }

@@ -12,6 +12,8 @@ interface ReportPreviewProps {
   htmlContent?: string;
   draftStatus?: "idle" | "saving" | "saved" | "error";
   columnDrag?: ReactNode;
+  /** Indent lines that start with "- " as smaller italic sub-items. */
+  subLines?: boolean;
 }
 
 function CopyIcon() {
@@ -37,6 +39,7 @@ export function ReportPreview({
   htmlContent,
   draftStatus = "idle",
   columnDrag,
+  subLines = false,
 }: ReportPreviewProps) {
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -108,7 +111,25 @@ export function ReportPreview({
           className="max-h-full min-h-0 overflow-auto whitespace-pre-wrap break-words p-4 pb-14 font-mono text-[13px] leading-relaxed text-text sm:p-4 sm:pb-16 sm:text-sm"
           aria-label="Generated report preview"
         >
-          {content || "Your report preview will appear here."}
+          {content
+            ? subLines
+              ? content.split("\n").map((line, index) => {
+                  const topic = /^\s+-\s/.test(line);
+                  return (
+                    <span
+                      key={`${index}-${line}`}
+                      className={
+                        topic
+                          ? "block pl-3 text-[12px] italic leading-relaxed text-muted"
+                          : "block"
+                      }
+                    >
+                      {line || " "}
+                    </span>
+                  );
+                })
+              : content
+            : "Your report preview will appear here."}
         </pre>
 
         <button

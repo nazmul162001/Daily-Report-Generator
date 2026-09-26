@@ -22,6 +22,7 @@ export function DetailedReportPreview({
       htmlContent={htmlContent}
       draftStatus={draftStatus}
       columnDrag={columnDrag}
+      subLines
     />
   );
 }

@@ -23,10 +23,8 @@ import {
   startOfDayWorkBreakdown,
 } from "@/data/defaultTemplates";
 import { isRevisionItem } from "@/features/time-tracking/revision";
-import { kindFromCategory } from "@/features/work-log/categories";
 import { applyLiveMinutes } from "@/features/work-log/totals";
 import { useWorkLog } from "@/features/work-log/useWorkLog";
-import { WorkLogPanel } from "@/features/work-log/WorkLogPanel";
 import { getDraft, setPreferences } from "@/lib/repository";
 import { getTodayIsoDate } from "@/lib/date";
 import { STORAGE_KEYS } from "@/lib/storage";
@@ -60,9 +58,6 @@ function DetailedReportPageInner() {
     createDefaultDetailedReport(),
   );
   const [hydrated, setHydrated] = useState(false);
-  const [selectedBreakdownId, setSelectedBreakdownId] = useState<string | null>(
-    null,
-  );
   const [columnOrder, setColumnOrder] = useState<ReportColumnId[]>(
     DEFAULT_COLUMN_ORDER,
   );
@@ -164,22 +159,10 @@ function DetailedReportPageInner() {
     hydrated,
   );
 
-  const selectedItem = report.workBreakdown.find(
-    (item) => item.id === selectedBreakdownId,
+  const visibleColumns = useMemo(
+    () => columnOrder.filter((id) => id !== "log"),
+    [columnOrder],
   );
-  const [slotItem, setSlotItem] = useState(selectedItem ?? null);
-  const [slotOpen, setSlotOpen] = useState(false);
-
-  useEffect(() => {
-    if (selectedItem) {
-      setSlotItem(selectedItem);
-      const frame = window.requestAnimationFrame(() => setSlotOpen(true));
-      return () => window.cancelAnimationFrame(frame);
-    }
-    setSlotOpen(false);
-    const timer = window.setTimeout(() => setSlotItem(null), 500);
-    return () => window.clearTimeout(timer);
-  }, [selectedItem]);
 
   const generated = useMemo(
     () => formatDetailedReport(report, workLog.day, workLog.now),
@@ -242,18 +225,17 @@ function DetailedReportPageInner() {
     }),
   );
 
-  const xlColumns = columnOrder
-    .map((id) => columnTrack(id, slotOpen, columnWidths))
+  const xlColumns = visibleColumns
+    .map((id) => columnTrack(id, false, columnWidths))
     .join(" ");
 
   const resizeNeighbors = useMemo(() => {
-    const visible = columnOrder.filter((id) => id !== "log" || slotOpen);
     const next = new Map<ReportColumnId, ReportColumnId>();
-    for (let index = 0; index < visible.length - 1; index += 1) {
-      next.set(visible[index], visible[index + 1]);
+    for (let index = 0; index < visibleColumns.length - 1; index += 1) {
+      next.set(visibleColumns[index], visibleColumns[index + 1]);
     }
     return next;
-  }, [columnOrder, slotOpen]);
+  }, [visibleColumns]);
 
   function measureColumn(id: ReportColumnId): number {
     const node = gridRef.current?.querySelector(`[data-report-column="${id}"]`);
@@ -334,7 +316,6 @@ function DetailedReportPageInner() {
   function renderColumn(
     id: ReportColumnId,
     drag: Parameters<typeof ColumnDragHandle>[0],
-    extras: { resizeHandleRight: React.ReactNode | null },
   ) {
     const handle = <ColumnDragHandle id={id} {...drag} />;
     if (id === "form") {
@@ -342,35 +323,11 @@ function DetailedReportPageInner() {
         <DetailedReportForm
           report={report}
           errors={errors}
-          selectedBreakdownId={selectedBreakdownId}
-          logDay={workLog.day}
-          now={workLog.now}
-          onSelectBreakdown={(breakdownId) => {
-            if (!breakdownId) {
-              setSelectedBreakdownId(null);
-              return;
-            }
-            setSelectedBreakdownId((current) =>
-              current === breakdownId ? null : breakdownId,
-            );
-          }}
+          log={workLog}
           onChange={setReport}
           columnDrag={handle}
         />
       );
-    }
-    if (id === "log") {
-      return slotItem ? (
-        <WorkLogPanel
-          key={slotItem.id}
-          kind={kindFromCategory(slotItem.category)}
-          category={slotItem.category}
-          log={workLog}
-          onClose={() => setSelectedBreakdownId(null)}
-          columnDrag={handle}
-          columnResizeRight={extras.resizeHandleRight}
-        />
-      ) : null;
     }
     return (
       <DetailedReportPreview
@@ -397,7 +354,7 @@ function DetailedReportPageInner() {
         onDragCancel={() => setActiveColumn(null)}
         onDragEnd={handleColumnDragEnd}
       >
-        <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
+        <SortableContext items={visibleColumns} strategy={horizontalListSortingStrategy}>
           <div
             ref={gridRef}
             className={cn(
@@ -407,17 +364,12 @@ function DetailedReportPageInner() {
             )}
             style={{
               ["--report-cols" as string]: xlColumns,
-              ["--log-col-width" as string]:
-                columnWidths?.log != null
-                  ? `${Math.round(columnWidths.log)}px`
-                  : "26rem",
             }}
           >
-            {columnOrder.map((id) => (
+            {visibleColumns.map((id) => (
               <SortableReportColumn
                 key={id}
                 id={id}
-                disabled={id === "log" && !slotOpen}
                 resizeNeighbor={
                   activeColumn ? null : (resizeNeighbors.get(id) ?? null)
                 }
@@ -426,13 +378,10 @@ function DetailedReportPageInner() {
                 onResizeEnd={handleResizeEnd}
                 className={cn(
                   id === "form" && "self-start",
-                  id === "log" && "work-log-slot-desktop hidden xl:block",
-                  id === "log" && slotOpen && "is-open",
                   id === "preview" && "xl:self-stretch",
-                  id === "preview" && slotOpen && "lg:col-span-2 xl:col-span-1",
                 )}
               >
-                {(drag, extras) => renderColumn(id, drag, extras)}
+                {(drag) => renderColumn(id, drag)}
               </SortableReportColumn>
             ))}
           </div>
@@ -446,34 +395,6 @@ function DetailedReportPageInner() {
           {activeColumn ? <ColumnDragPreview id={activeColumn} /> : null}
         </DragOverlay>
       </DndContext>
-
-      {slotItem ? (
-        <>
-          <button
-            type="button"
-            className={cn(
-              "work-log-backdrop xl:hidden",
-              slotOpen && "is-open",
-            )}
-            aria-label="Close log"
-            onClick={() => setSelectedBreakdownId(null)}
-          />
-          <div
-            className={cn(
-              "work-log-slot-mobile xl:hidden",
-              slotOpen && "is-open",
-            )}
-          >
-            <WorkLogPanel
-              key={`mobile-${slotItem.id}`}
-              kind={kindFromCategory(slotItem.category)}
-              category={slotItem.category}
-              log={workLog}
-              onClose={() => setSelectedBreakdownId(null)}
-            />
-          </div>
-        </>
-      ) : null}
     </>
   );
 }
