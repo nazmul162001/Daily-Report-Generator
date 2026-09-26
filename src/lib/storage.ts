@@ -109,6 +109,14 @@ export const STORAGE_KEYS = {
   detailedReportColumns: "drg:detailed-report:columns",
   /** Display name for Daily Report title (local + cookie). */
   userProfile: "drg:user-profile",
+  /** One-time "what's new" note. Stays dismissed after the first close. */
+  whatsNew: "drg:whats-new-seen",
   /** Hours Calculator direction, multiple-entry mode, and values. */
   hoursCalculator: "drg:hours-calculator",
+  /** Code backups grouped by project title. */
+  codeBackups: "drg:code-backups",
+  /** Notion note list, refreshed once per local day. */
+  notionNotes: "drg:notion-notes",
+  /** Notion note bodies opened today. */
+  notionNoteBodies: "drg:notion-note-bodies",
 } as const;

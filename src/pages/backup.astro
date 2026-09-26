@@ -1,0 +1,11 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { BackupPage } from "@/features/backup/components/BackupPage";
+---
+
+<AppShell
+  title="Backup | Daily Report Generator"
+  description="Save HTML, CSS, JavaScript, and PHP backups by project title."
+>
+  <BackupPage client:load />
+</AppShell>

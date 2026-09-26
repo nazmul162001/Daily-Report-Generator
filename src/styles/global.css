@@ -77,6 +77,59 @@ html[data-theme="dark"] .theme-icon-moon {
   }
 }
 
+@keyframes noteRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes noteShimmer {
+  0% {
+    background-position: 160% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+@keyframes noteSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.note-rise {
+  animation: noteRise 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.note-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--color-primary) 14%, transparent) 50%,
+    transparent 80%
+  );
+  background-size: 220% 100%;
+  animation: noteShimmer 1.7s ease-in-out infinite;
+}
+
+.note-spin {
+  animation: noteSpin 0.85s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-rise,
+  .note-shimmer,
+  .note-spin {
+    animation: none;
+  }
+}
+
 @keyframes modalIn {
   from {
     opacity: 0;
@@ -108,123 +161,24 @@ html.theme-revealing body * {
   view-transition-name: none !important;
 }
 
-@keyframes activityOrb {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.45;
-  }
-  50% {
-    transform: translate3d(14px, -12px, 0) scale(1.12);
-    opacity: 0.8;
-  }
-}
-
-@keyframes activityPulse {
-  0% {
-    transform: scale(0.55);
-    opacity: 0.55;
-  }
-  70% {
-    transform: scale(2.1);
+@keyframes featureIn {
+  from {
     opacity: 0;
+    transform: translateY(16px);
   }
-  100% {
-    transform: scale(2.1);
-    opacity: 0;
-  }
-}
-
-.activity-chart .recharts-wrapper,
-.activity-chart .recharts-surface {
-  overflow: visible !important;
-}
-
-.activity-chart .recharts-tooltip-wrapper {
-  z-index: 30;
-  pointer-events: none;
-}
-
-.activity-chart-orbs {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.activity-chart-orbs span {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(34px);
-  animation: activityOrb 9s ease-in-out infinite;
-}
-
-.activity-orb-a {
-  top: -18%;
-  left: 8%;
-  width: 9rem;
-  height: 9rem;
-  background: var(--c-chart-orb-a);
-}
-
-.activity-orb-b {
-  right: 6%;
-  bottom: -22%;
-  width: 11rem;
-  height: 11rem;
-  background: var(--c-chart-orb-b);
-  animation-delay: -3s;
-}
-
-.activity-orb-c {
-  top: 28%;
-  left: 42%;
-  width: 7rem;
-  height: 7rem;
-  background: var(--c-chart-orb-c);
-  animation-delay: -5.5s;
-}
-
-.activity-pulse-ring {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: activityPulse 2.2s ease-out infinite;
-}
-
-@keyframes refreshSpin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes refreshPulse {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 40%, transparent);
-  }
-  100% {
-    box-shadow: 0 0 0 10px transparent;
-  }
-}
-
-.refresh-spin {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: refreshSpin 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.refresh-btn-pulse {
-  animation: refreshPulse 0.55s ease-out;
+.feature-in {
+  animation: featureIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .activity-chart-orbs span,
-  .activity-pulse-ring,
-  .refresh-spin,
-  .refresh-btn-pulse {
-    animation: none !important;
+  .feature-in {
+    animation: none;
   }
 }
 

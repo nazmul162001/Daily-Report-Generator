@@ -1,0 +1,8 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { NoteReader } from "@/features/notes/components/NoteReader";
+---
+
+<AppShell title="Note | Daily Report Generator" description="Read a Notion note.">
+  <NoteReader client:load />
+</AppShell>
