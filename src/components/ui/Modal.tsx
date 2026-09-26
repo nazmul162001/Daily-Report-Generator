@@ -10,6 +10,7 @@ interface ModalProps {
   onClose: () => void;
   footer?: ReactNode;
   panelClassName?: string;
+  bodyClassName?: string;
 }
 
 export function Modal({
@@ -19,6 +20,7 @@ export function Modal({
   onClose,
   footer,
   panelClassName,
+  bodyClassName,
 }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -136,7 +138,7 @@ export function Modal({
           </button>
         </div>
 
-        <div className="text-sm text-muted">{children}</div>
+        <div className={cn("text-sm text-muted", bodyClassName)}>{children}</div>
 
         {footer ? (
           <div className="mt-6 flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end sm:gap-2.5">

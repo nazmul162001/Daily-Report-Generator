@@ -111,4 +111,6 @@ export const STORAGE_KEYS = {
   userProfile: "drg:user-profile",
   /** Hours Calculator direction, multiple-entry mode, and values. */
   hoursCalculator: "drg:hours-calculator",
+  /** Code backups grouped by project title. */
+  codeBackups: "drg:code-backups",
 } as const;
