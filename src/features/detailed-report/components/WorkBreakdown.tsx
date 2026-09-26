@@ -36,6 +36,18 @@ interface WorkBreakdownProps {
   onChange: (items: WorkBreakdownItem[]) => void;
 }
 
+function armSuggestionBlock(node: HTMLInputElement | null) {
+  if (!node || node.dataset.noSuggest === "1") {
+    return;
+  }
+  node.dataset.noSuggest = "1";
+  node.readOnly = true;
+}
+
+function releaseSuggestionBlock(node: HTMLInputElement) {
+  node.readOnly = false;
+}
+
 function topicKind(category: string): TimedKind {
   const kind = kindFromCategory(category);
   return kind === "review" ? "custom" : kind;
@@ -266,11 +278,21 @@ function TopicRow({
       ) : editingTime ? (
         <div className="flex shrink-0 items-center gap-1">
           <input
-            ref={timeInputRef}
+            ref={(node) => {
+              timeInputRef.current = node;
+              armSuggestionBlock(node);
+            }}
             autoFocus
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             inputMode="decimal"
             value={timeText}
-            onFocus={(event) => event.currentTarget.select()}
+            onMouseDown={(event) => releaseSuggestionBlock(event.currentTarget)}
+            onFocus={(event) => {
+              releaseSuggestionBlock(event.currentTarget);
+              event.currentTarget.select();
+            }}
             onChange={(event) => {
               timeEdited.current = true;
               setShowTimeUnit(true);
@@ -480,11 +502,19 @@ function WorkBreakdownRow({
         <div className="work-breakdown-row__minutes flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
           <div className="flex flex-1 items-center justify-center px-1.5 pt-1.5">
             <input
-              ref={minutesInputRef}
+              ref={(node) => {
+                minutesInputRef.current = node;
+                armSuggestionBlock(node);
+              }}
               id={`wb-minutes-${item.id}`}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
               inputMode="decimal"
               value={shownMinutes}
+              onMouseDown={(event) => releaseSuggestionBlock(event.currentTarget)}
               onFocus={(event) => {
+                releaseSuggestionBlock(event.currentTarget);
                 if (!minutesFocused.current) {
                   minutesFocused.current = true;
                   minutesEdited.current = false;
