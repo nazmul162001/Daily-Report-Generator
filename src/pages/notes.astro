@@ -1,0 +1,8 @@
+---
+import AppShell from "@/components/layout/AppShell.astro";
+import { NotesPage } from "@/features/notes/components/NotesPage";
+---
+
+<AppShell title="Notes | Daily Report Generator" description="Read pages from your Notion workspace.">
+  <NotesPage client:load />
+</AppShell>

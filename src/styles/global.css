@@ -77,6 +77,59 @@ html[data-theme="dark"] .theme-icon-moon {
   }
 }
 
+@keyframes noteRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes noteShimmer {
+  0% {
+    background-position: 160% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+@keyframes noteSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.note-rise {
+  animation: noteRise 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.note-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--color-primary) 14%, transparent) 50%,
+    transparent 80%
+  );
+  background-size: 220% 100%;
+  animation: noteShimmer 1.7s ease-in-out infinite;
+}
+
+.note-spin {
+  animation: noteSpin 0.85s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-rise,
+  .note-shimmer,
+  .note-spin {
+    animation: none;
+  }
+}
+
 @keyframes modalIn {
   from {
     opacity: 0;
