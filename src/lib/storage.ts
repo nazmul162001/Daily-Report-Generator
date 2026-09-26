@@ -109,4 +109,6 @@ export const STORAGE_KEYS = {
   detailedReportColumns: "drg:detailed-report:columns",
   /** Display name for Daily Report title (local + cookie). */
   userProfile: "drg:user-profile",
+  /** Hours Calculator direction, multiple-entry mode, and values. */
+  hoursCalculator: "drg:hours-calculator",
 } as const;

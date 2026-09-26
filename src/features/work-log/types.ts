@@ -21,6 +21,8 @@ export interface TimedLogEntry {
   label: string;
   /** Task number for revision / feedback / question. */
   taskNo: string;
+  /** Work-breakdown row this topic belongs to. */
+  scopeId?: string;
   status: TimedStatus;
   startedAt: number | null;
   elapsedMs: number;

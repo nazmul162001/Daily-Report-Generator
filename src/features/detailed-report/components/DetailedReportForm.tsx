@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { didRevisionFieldsChange } from "@/features/time-tracking/revision";
-import type { WorkLogDay } from "@/features/work-log/types";
+import type { WorkLogController } from "@/features/work-log/useWorkLog";
 import type { DetailedReportData } from "../types";
 import { GoalReview } from "./GoalReview";
 import { RecipientsEditor } from "./RecipientsEditor";
@@ -16,10 +16,7 @@ interface DetailedReportFormProps {
     goalReview?: string;
     tomorrowGoals?: string;
   };
-  selectedBreakdownId: string | null;
-  logDay: WorkLogDay;
-  now: number;
-  onSelectBreakdown: (id: string) => void;
+  log: WorkLogController;
   onChange: (report: DetailedReportData) => void;
   columnDrag?: ReactNode;
 }
@@ -27,10 +24,7 @@ interface DetailedReportFormProps {
 export function DetailedReportForm({
   report,
   errors,
-  selectedBreakdownId,
-  logDay,
-  now,
-  onSelectBreakdown,
+  log,
   onChange,
   columnDrag,
 }: DetailedReportFormProps) {
@@ -53,10 +47,7 @@ export function DetailedReportForm({
         <WorkBreakdown
           items={report.workBreakdown}
           error={errors.workBreakdown}
-          selectedId={selectedBreakdownId}
-          logDay={logDay}
-          now={now}
-          onSelect={onSelectBreakdown}
+          log={log}
           onChange={(workBreakdown) =>
             onChange({
               ...report,

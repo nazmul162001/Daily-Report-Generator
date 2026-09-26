@@ -170,8 +170,8 @@ function normalizeTimed(raw: unknown): TimedLogEntry | null {
     typeof kindRaw === "string" && TIMED_KINDS.includes(kindRaw as TimedKind)
       ? (kindRaw as TimedKind)
       : null;
-  const label = typeof raw.label === "string" ? raw.label.trim() : "";
-  if (!kind || !label) {
+  const rawLabel = typeof raw.label === "string" ? raw.label : "";
+  if (!kind || !rawLabel.trim()) {
     return null;
   }
   const statusRaw = raw.status;
@@ -185,8 +185,12 @@ function normalizeTimed(raw: unknown): TimedLogEntry | null {
   return {
     id: typeof raw.id === "string" && raw.id.trim() ? raw.id : createId("log"),
     kind,
-    label,
+    label: rawLabel,
     taskNo: typeof raw.taskNo === "string" ? raw.taskNo.trim() : "",
+    scopeId:
+      typeof raw.scopeId === "string" && raw.scopeId.trim()
+        ? raw.scopeId.trim()
+        : undefined,
     status,
     startedAt: asFiniteNumber(raw.startedAt),
     elapsedMs: Math.max(0, asFiniteNumber(raw.elapsedMs) ?? 0),

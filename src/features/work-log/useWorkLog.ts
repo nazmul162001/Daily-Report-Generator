@@ -18,7 +18,7 @@ import {
   updateTodayLog,
 } from "./storage";
 import { startFreshEntry, setElapsedMinutes } from "./timer";
-import type { TimedKind, WorkLogDay, WorkLogKind, WorkLogStore } from "./types";
+import type { TimedKind, TimedLogEntry, WorkLogDay, WorkLogKind, WorkLogStore } from "./types";
 
 function persist(store: WorkLogStore): WorkLogStore {
   return saveWorkLogStore(store);
@@ -113,6 +113,52 @@ export function useWorkLog() {
       window.removeEventListener("beforeunload", flush);
     };
   }, []);
+
+  const addTopic = useCallback(
+    (scopeId: string, kind: TimedKind, label: string): string | null => {
+      const trimmed = label.trim();
+      const id = scopeId.trim();
+      if (!trimmed || !id) {
+        return null;
+      }
+      const entryId = createId("log");
+      const startedAt = Date.now();
+      const date = getTodayIsoDate();
+      setToday(date);
+      const entry: TimedLogEntry = {
+        id: entryId,
+        kind,
+        label: trimmed,
+        taskNo: "",
+        scopeId: id,
+        status: "idle",
+        startedAt: null,
+        elapsedMs: 0,
+        loggedAt: startedAt,
+      };
+      commit((current) =>
+        updateTodayLog(
+          current,
+          (log) => ({ ...log, timed: [...log.timed, entry] }),
+          date,
+        ),
+      );
+      return entryId;
+    },
+    [commit],
+  );
+
+  const renameTopic = useCallback((entryId: string, label: string) => {
+    if (!label.trim()) {
+      return;
+    }
+    commitToday((log) => ({
+      ...log,
+      timed: log.timed.map((entry) =>
+        entry.id === entryId ? { ...entry, label } : entry,
+      ),
+    }));
+  }, [commitToday]);
 
   const addProject = useCallback((name: string, kind: WorkLogKind) => {
     const trimmed = name.trim();
@@ -288,6 +334,8 @@ export function useWorkLog() {
     day,
     store,
     running,
+    addTopic,
+    renameTopic,
     addProject,
     removeProject,
     addTimed,

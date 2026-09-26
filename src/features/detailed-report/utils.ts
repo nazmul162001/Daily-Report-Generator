@@ -6,7 +6,9 @@ import {
 } from "./duration";
 import type { DetailedReportData } from "./types";
 import type { BulletItem } from "@/types/common";
-import { displayMinutesForItem } from "@/features/work-log/totals";
+import { displayMinutesForItem, topicsForBreakdown, roundLiveMinutes } from "@/features/work-log/totals";
+import { durationMsToMinutes } from "@/features/time-tracking/timer";
+import { getTimedDurationMs } from "@/features/work-log/timer";
 import type { WorkLogDay } from "@/features/work-log/types";
 import { emptyDay } from "@/features/work-log/storage";
 
@@ -65,6 +67,24 @@ function formatTotalTimeValue(total: number): string {
   return `${minsLabel} minutes (${formatHoursFromMinutes(total)} hours)`;
 }
 
+function formatTopicDuration(minutes: number): string {
+  const rounded = roundLiveMinutes(minutes);
+  const minsLabel = Number.isInteger(rounded) ? String(rounded) : String(rounded);
+  return `${minsLabel} minutes - ${formatHoursFromMinutes(rounded)} hours`;
+}
+
+function topicLines(
+  itemId: string,
+  logDay: WorkLogDay,
+  now: number,
+): { label: string; minutes: number }[] {
+  return topicsForBreakdown(logDay, itemId).map((entry) => ({
+    label: entry.label.trim(),
+    minutes: roundLiveMinutes(
+      durationMsToMinutes(getTimedDurationMs(entry, now)),
+    ),
+  }));
+}
 function formatTotalTimeLine(
   report: DetailedReportData,
   logDay: WorkLogDay,
@@ -101,6 +121,12 @@ export function formatDetailedReport(
         isBreakdownNA(item, logDay, now),
       )}`,
     );
+    for (const topic of topicLines(item.id, logDay, now)) {
+      if (!topic.label) {
+        continue;
+      }
+      lines.push(`  - ${topic.label} (${formatTopicDuration(topic.minutes)})`);
+    }
   }
 
   const goalReview = filledGoals(report.goalReview);
@@ -161,8 +187,21 @@ export function formatDetailedReportHtml(
       displayMinutesForItem(item, logDay, now),
       isBreakdownNA(item, logDay, now),
     );
+    const topics = topicLines(item.id, logDay, now).filter((topic) => topic.label);
+    if (topics.length === 0) {
+      parts.push(
+        `<li><strong>${escapeHtml(category)}:</strong> ${escapeHtml(duration)}</li>`,
+      );
+      continue;
+    }
+    const nested = topics
+      .map(
+        (topic) =>
+          `<li style="font-size:0.85em;font-style:italic">${escapeHtml(topic.label)} (${escapeHtml(formatTopicDuration(topic.minutes))})</li>`,
+      )
+      .join("");
     parts.push(
-      `<li><strong>${escapeHtml(category)}:</strong> ${escapeHtml(duration)}</li>`,
+      `<li><strong>${escapeHtml(category)}:</strong> ${escapeHtml(duration)}<ul>${nested}</ul></li>`,
     );
   }
   parts.push("</ul>");

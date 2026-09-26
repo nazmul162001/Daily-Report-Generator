@@ -10,12 +10,33 @@ export function timedMinutesForKind(
   now = Date.now(),
 ): number {
   return day.timed
-    .filter((entry) => entry.kind === kind)
+    .filter((entry) => entry.kind === kind && !entry.scopeId)
     .reduce((sum, entry) => sum + durationMsToMinutes(getTimedDurationMs(entry, now)), 0);
 }
 
 export function reviewMinutes(day: WorkLogDay): number {
   return day.reviews.reduce((sum, entry) => sum + Math.max(0, entry.minutes), 0);
+}
+
+export function topicsForBreakdown(
+  day: WorkLogDay,
+  breakdownId: string,
+): TimedLogEntry[] {
+  if (!breakdownId) {
+    return [];
+  }
+  return day.timed.filter((entry) => entry.scopeId === breakdownId);
+}
+
+export function topicMinutes(
+  day: WorkLogDay,
+  breakdownId: string,
+  now = Date.now(),
+): number {
+  return topicsForBreakdown(day, breakdownId).reduce(
+    (sum, entry) => sum + durationMsToMinutes(getTimedDurationMs(entry, now)),
+    0,
+  );
 }
 
 export function liveMinutesForKind(
@@ -50,11 +71,14 @@ export function displayMinutesForItem(
   if (item.isNA || item.minutesLocked) {
     return item.minutes;
   }
+  const scoped = topicsForBreakdown(day, item.id);
   const live = roundLiveMinutes(
-    liveMinutesForKind(day, kindFromCategory(item.category), now),
+    scoped.length > 0
+      ? topicMinutes(day, item.id, now)
+      : liveMinutesForKind(day, kindFromCategory(item.category), now),
   );
   if (live <= 0) {
-    return item.minutes;
+    return "0";
   }
   return minutesToInput(live);
 }
@@ -138,10 +162,19 @@ export function applyLiveMinutes(
     if (item.isNA || item.minutesLocked) {
       return item;
     }
+    const scoped = topicsForBreakdown(day, item.id);
     const kind = kindFromCategory(item.category);
-    const live = roundLiveMinutes(liveMinutesForKind(day, kind, now));
+    const live = roundLiveMinutes(
+      scoped.length > 0
+        ? topicMinutes(day, item.id, now)
+        : liveMinutesForKind(day, kind, now),
+    );
     if (live <= 0) {
-      return item;
+      if ((item.minutes === "0" || item.minutes === "") && item.isNA === false) {
+        return item;
+      }
+      changed = true;
+      return { ...item, minutes: "0", isNA: false };
     }
     const asText = minutesToInput(live);
     if (item.minutes === asText && item.isNA === false) {

@@ -53,9 +53,8 @@ export function WelcomeNameModal() {
     >
       <div className="space-y-4 text-text">
         <p className="leading-relaxed">
-          Create, preview, and copy Slack-ready daily reports in seconds. Track
-          activity, log detailed work, and generate reports — all saved in
-          your browser.
+          Create, preview, and copy Slack-ready daily reports in seconds. Log
+          detailed work and generate reports — all saved in your browser.
         </p>
         <p className="leading-relaxed">
           Add your name once and it will appear in your Daily Report as{" "}
