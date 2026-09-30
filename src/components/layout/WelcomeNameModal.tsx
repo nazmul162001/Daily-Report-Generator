@@ -23,7 +23,7 @@ export function WelcomeNameModal() {
     }
     setOpen(false);
   }, []);
-
+// 
   function save() {
     const trimmed = name.trim();
     if (!trimmed) {
